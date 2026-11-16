@@ -22,7 +22,7 @@ flowchart LR
   API --> Smith
 ```
 
-Solid boxes in the running Compose file today are the dashboard, the API, and PostgreSQL. JWT, OpenFGA, LiteLLM, Ollama, and LangSmith are the next seams. They are packages in the API tree and are not called yet.
+Solid boxes in the running application today are the dashboard, the API, PostgreSQL, and the OpenAI path through LiteLLM. JWT, OpenFGA, the LiteLLM proxy process, Ollama, and LangSmith are the remaining seams. The debug page reads `llm_traces` and does not call OpenAI except when you send a test prompt.
 
 ## Why the split looks like this
 

@@ -23,6 +23,12 @@ services:
       NEXUS_LOG_LEVEL: ${NEXUS_LOG_LEVEL:-INFO}
       NEXUS_DATABASE_URL: ${NEXUS_DATABASE_URL:-postgresql+asyncpg://nexus:nexus@postgres:5432/nexusai}
       NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:5173,http://localhost:8080}
+      NEXUS_CHAT_ALIAS: ${NEXUS_CHAT_ALIAS:-chat-default}
+      NEXUS_CHAT_MODEL: ${NEXUS_CHAT_MODEL:-openai/gpt-4o-mini}
+      NEXUS_LLM_TIMEOUT_SECONDS: ${NEXUS_LLM_TIMEOUT_SECONDS:-60}
+      NEXUS_LLM_MAX_RETRIES: ${NEXUS_LLM_MAX_RETRIES:-2}
+      NEXUS_TRACE_DATABASE_URL: ${NEXUS_TRACE_DATABASE_URL:-postgresql+asyncpg://nexus:nexus@postgres:5432/nexusai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     ports:
       - "8000:8000"
     depends_on:

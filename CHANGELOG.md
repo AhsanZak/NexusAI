@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0] - 2026-11-16
+
+### Added
+
+- LiteLLM gateway that calls OpenAI through the `chat-default` alias.
+- A trace of every model call, with the prompt, response, token counts, latency, and error.
+- An OpenAI debug page that lists those traces and can send a test prompt.
+- Alembic revision `0002_llm_traces`.
+
 ## [0.1.0] - 2026-11-16
 
 ### Added

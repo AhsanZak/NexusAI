@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nexusai-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "NexusAI API for enterprise knowledge, analytics, and AI automation"
 requires-python = ">=3.12"
 dependencies = [
@@ -16,6 +16,8 @@ dependencies = [
     "pydantic-settings>=2.6",
     "structlog>=24.4",
     "httpx>=0.28",
+    "litellm>=1.74",
+    "aiosqlite>=0.21",
 ]
 
 [project.optional-dependencies]

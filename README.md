@@ -9,9 +9,10 @@ The public repository is [AhsanZak/NexusAI](https://github.com/AhsanZak/NexusAI)
 - `GET /api/v1/health` reports that the API process is up.
 - `GET /api/v1/health/ready` reports that PostgreSQL accepts a query.
 - Alembic enables the `vector` extension on startup.
-- The dashboard at `http://localhost:8080` shows those two checks and the module map for later milestones.
+- The dashboard at `http://localhost:8080` shows API and database status.
+- `http://localhost:8080/debug` is the OpenAI debug page. It lists every gateway call and can send a test prompt. Set `OPENAI_API_KEY` before expecting a live answer. The key is never displayed.
 
-Authentication, OpenFGA, LiteLLM, document ingestion, RAG, NL2SQL, and agents are not implemented yet. See [PROJECT_STATUS.md](PROJECT_STATUS.md).
+Authentication, OpenFGA, document ingestion, RAG, NL2SQL, and agents are not implemented yet. OpenAI chat calls go through the LiteLLM gateway and are visible on the debug page. See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [docs/LLM_GATEWAY.md](docs/LLM_GATEWAY.md).
 
 ## Run locally
 

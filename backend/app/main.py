@@ -15,14 +15,17 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.database import engine
 from app.core.logging import configure_logging
+from app.repositories.llm_traces import dispose_trace_engine, init_trace_store
 
 log = structlog.get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    await init_trace_store()
     yield
     await engine.dispose()
+    await dispose_trace_engine()
 
 
 def create_app() -> FastAPI:

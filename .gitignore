@@ -18,6 +18,8 @@ dist/
 
 data/raw/
 data/documents/
+data/debug/
+backend/data/
 
 *.log
 .DS_Store

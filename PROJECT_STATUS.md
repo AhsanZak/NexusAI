@@ -4,7 +4,9 @@ Last updated: 2026-11-16
 
 ## Current milestone
 
-**M0 Foundation — implemented, checked locally, and pushed to [main](https://github.com/AhsanZak/NexusAI).**
+**M0 Foundation is on `main`.** OpenAI debugging was added after that: the LiteLLM gateway, trace storage, and the `/debug` page.
+
+The gateway calls `chat-default`. The default model is `openai/gpt-4o-mini`. `OPENAI_API_KEY` is unset, so a live OpenAI answer was not requested. In the browser, `/debug` showed the gateway as not configured, accepted a test prompt, and opened a trace whose error was `OPENAI_API_KEY is not set`. Unit tests cover a successful fake call without contacting OpenAI.
 
 The repository contains the runnable skeleton: FastAPI health endpoints, Alembic with the pgvector extension, a React and Ant Design shell, and a Docker Compose file for PostgreSQL, the API, and the dashboard.
 
@@ -23,7 +25,7 @@ The repository contains the runnable skeleton: FastAPI health endpoints, Alembic
 | M0 Foundation | Compose file, health API, dashboard shell, docs | Complete, except the Compose process was not started on this machine |
 | M1 Identity and tenancy | JWT, organizations, departments, users, synthetic seed | Not started |
 | M2 OpenFGA | Authorization model, tuple sync, service-layer checks | Not started |
-| M3 LiteLLM gateway | Ollama aliases, retries, LangSmith tracing hook | Not started |
+| M3 LiteLLM gateway | Ollama aliases and the LiteLLM proxy process. OpenAI chat and the debug page are already in place. | Partial |
 | M4 Olist warehouse | Schema, validated CSV load, read-only SQL role | Not started |
 | M5 NL2SQL | Guarded SQL, charts, Olist execution-accuracy set | Not started |
 | M6 Documents | Upload, chunk, embed, authorization before content | Not started |
@@ -43,7 +45,7 @@ The repository contains the runnable skeleton: FastAPI health endpoints, Alembic
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | M0 |
 | docs/DATABASE_SCHEMA.md | M4 |
 | docs/OPENFGA_MODEL.md | M2 |
-| docs/LLM_GATEWAY.md | M3 |
+| [docs/LLM_GATEWAY.md](docs/LLM_GATEWAY.md) | OpenAI gateway and debug traces |
 | docs/RAG_PIPELINE.md | M9 |
 | docs/NL2SQL.md | M5 |
 | docs/EVALUATION.md | M11 |

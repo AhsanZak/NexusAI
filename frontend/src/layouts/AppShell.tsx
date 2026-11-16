@@ -1,6 +1,7 @@
 import {
   ApartmentOutlined,
   BarChartOutlined,
+  BugOutlined,
   DashboardOutlined,
   FileSearchOutlined,
   RobotOutlined,
@@ -10,6 +11,7 @@ import { Layout, Menu, Typography } from "antd";
 import { useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 
+import { DebugPage } from "../pages/DebugPage";
 import { OverviewPage } from "../pages/OverviewPage";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
 
@@ -22,6 +24,7 @@ const items = [
   { key: "/analytics", icon: <BarChartOutlined />, label: <Link to="/analytics">Analytics</Link> },
   { key: "/agents", icon: <ApartmentOutlined />, label: <Link to="/agents">Agents</Link> },
   { key: "/admin", icon: <TeamOutlined />, label: <Link to="/admin">Admin</Link> },
+  { key: "/debug", icon: <BugOutlined />, label: <Link to="/debug">OpenAI debug</Link> },
 ];
 
 export function AppShell() {
@@ -89,6 +92,7 @@ export function AppShell() {
                 />
               }
             />
+            <Route path="/debug" element={<DebugPage />} />
           </Routes>
         </Content>
       </Layout>
