@@ -4,22 +4,21 @@ Last updated: 2026-11-16
 
 ## Current milestone
 
-**World Bank public data is loaded into local PostgreSQL and shown on the main page.**
+**Olist sales analytics are loaded and shown on the Analytics page.**
 
-On 16 November 2026 the loader stored 1,750 indicator observations (GDP, inflation, population, employment ratio, imports, and exports, 2000–2024, twelve countries) and 12 World Development Report records. The database is a user-owned PostgreSQL 18 cluster on `127.0.0.1:5433` because this account cannot access the Docker socket and the system PostgreSQL on port 5432 requires a password that is not available. pgvector is not installed in that cluster. Docker Compose remains the path when Docker is usable.
+On 16 November 2026 `kagglehub` downloaded `olistbr/brazilian-ecommerce`. PostgreSQL holds 99,441 orders and the other eight published tables, including 1,000,163 geolocation rows. The original CSVs are in gitignored `data/raw/olist/`. The Analytics page shows monthly revenue in Brazilian reais, top categories, review scores, payment types, and delivery performance. Natural-language SQL is not built.
 
-Olist is not loaded: the Kaggle download needs a Kaggle API token or the nine CSVs placed in `data/raw/olist/`. SEC filings are not loaded: `SEC_USER_AGENT` is unset. Synthetic organizations are not generated yet.
+World Bank indicator history and 12 World Development Report records remain loaded. SEC filings are not loaded: `SEC_USER_AGENT` is unset. Synthetic organizations are not generated yet.
 
 The repository contains the runnable skeleton: FastAPI health endpoints, Alembic with the pgvector extension, a React and Ant Design shell, and a Docker Compose file for PostgreSQL, the API, and the dashboard.
 
 ## Verification on 2026-11-16
 
-- Backend, Python 3.12 via `uv`: pytest 16 passed, Ruff clean, mypy clean.
-- Frontend: ESLint clean and the Vite production build succeeded before this load. The running dashboard is the Vite dev server.
-- `python -m app.ingestion.worldbank` finished with 1,750 observations, 12 documents, and no errors.
-- `GET /api/v1/health/ready` returned database up against `127.0.0.1:5433`.
-- Browser at `http://127.0.0.1:5173/`: the overview showed 1,750 observations, 12 reports, and 12 country lines for GDP. Switching the selector to inflation changed the scale label to "Percent" and kept 12 lines. `/documents` still opened the document-intelligence page.
-- `docker compose up` was not run. This user is denied access to the Docker socket.
+- Backend, Python 3.12 via `uv`: pytest 20 passed, Ruff clean, mypy clean.
+- `python -m app.ingestion.olist` stored 99,441 orders, 112,650 items, 99,224 reviews, and 1,000,163 geolocation rows. Counts match the published CSVs.
+- `GET /api/v1/olist/dashboard` returned health_beauty as the top category, average review 4.09, and 91.9% on-time delivery.
+- Browser at `http://127.0.0.1:5173/analytics` showed those figures, the monthly revenue chart, the review-score chart, and the Olist attribution.
+- World Bank data from the earlier load is still in PostgreSQL. `docker compose up` was not run. This user is denied access to the Docker socket.
 
 ## Milestone roadmap
 
@@ -29,8 +28,8 @@ The repository contains the runnable skeleton: FastAPI health endpoints, Alembic
 | M1 Identity and tenancy | JWT, organizations, departments, users, synthetic seed | Not started |
 | M2 OpenFGA | Authorization model, tuple sync, service-layer checks | Not started |
 | M3 LiteLLM gateway | Ollama aliases and the LiteLLM proxy process. OpenAI chat and the debug page are already in place. | Partial |
-| M4 Olist warehouse | Schema, validated CSV load, read-only SQL role | Not started |
-| M5 NL2SQL | Guarded SQL, charts, Olist execution-accuracy set | Not started |
+| M4 Olist warehouse | Schema, validated CSV load, read-only SQL role | Loaded. The read-only SQL role is not created yet. |
+| M5 NL2SQL | Guarded SQL, charts, Olist execution-accuracy set | Charts are SQL reports. Natural-language queries are not built. |
 | M6 Documents | Upload, chunk, embed, authorization before content | Not started |
 | M7 Public documents | Bounded SEC EDGAR and World Bank document ingestion | World Bank report metadata is loaded. SEC and PDF embeddings are not. |
 | M8 World Bank indicators | API ingest, history, country charts | Loaded for twelve countries, 2000–2024. Natural-language queries are not built. |

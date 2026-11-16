@@ -10,7 +10,8 @@ The public repository is [AhsanZak/NexusAI](https://github.com/AhsanZak/NexusAI)
 - `GET /api/v1/health/ready` reports that PostgreSQL accepts a query.
 - Alembic enables the `vector` extension when PostgreSQL has it installed.
 - The dashboard at `http://localhost:8080` shows API and database status.
-- The main page charts World Bank indicators stored in PostgreSQL and lists public World Bank reports. Set the API at the local cluster before starting it outside Compose:
+- The Analytics page charts the Olist 2016–2018 snapshot: sales, categories, reviews, payments, and delivery.
+- The main page still charts the World Bank extract. Outside Compose, point the API at the local database:
 
 ```bash
 export NEXUS_DATABASE_URL=postgresql+asyncpg://nexus:nexus@127.0.0.1:5433/nexusai
@@ -71,4 +72,4 @@ npm run build
 
 ## Data
 
-World Bank indicator history and a page of World Development Reports are loaded by `python -m app.ingestion.worldbank`. Olist, SEC EDGAR, and synthetic organizations are not loaded. Licences and download rules are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). Raw files under `data/raw/` are gitignored.
+World Bank indicator history, a page of World Development Reports, and the Olist e-commerce snapshot are loaded. SEC EDGAR and synthetic organizations are not loaded. Licences and download rules are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). Raw files under `data/raw/` are gitignored.

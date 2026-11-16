@@ -10,13 +10,23 @@ The application code is separate from these datasets. Dataset terms below do not
 - Licence: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - Contents: orders, customers, order items, payments, reviews, products, sellers, geolocation, and product category name translations
 - Period: orders from 2016 to 2018. This is a published snapshot, not a live store.
-- Use: relational warehouse, SQL analytics, and the primary NL2SQL database
+- Use: relational warehouse in schema `olist`, and the Analytics page for sales, categories, reviews, payments, and delivery
+
+The loader downloads the public dataset with `kagglehub.dataset_download("olistbr/brazilian-ecommerce")`, copies the nine CSVs into gitignored `data/raw/olist/`, and records a SHA-256 for each file.
+
+```bash
+export NEXUS_DATABASE_URL=postgresql+asyncpg://nexus:nexus@127.0.0.1:5433/nexusai
+cd backend
+.venv/bin/python -m app.ingestion.olist
+```
+
+On 16 November 2026 that load stored 99,441 orders, 99,441 customers, 112,650 order items, 103,886 payments, 99,224 reviews, 32,951 products, 3,095 sellers, 73 categories, and 1,000,163 geolocation rows. The published review file repeats some `review_id` values, so every published review row is kept. Two category names have no English translation in the source file. Natural-language SQL is not built yet.
 
 Attribution to keep with any derived table or figure:
 
 > Olist. Brazilian E-Commerce Public Dataset by Olist. Kaggle. Licensed CC BY-NC-SA 4.0.
 
-Non-commercial use, attribution, and share-alike apply. The nine CSV files will not be committed. Ingestion will accept a Kaggle API token or a manual drop in `data/raw/olist/`. The loader must validate that all nine files are present and record row counts.
+Non-commercial use, attribution, and share-alike apply. The nine CSV files are not committed.
 
 ## SEC EDGAR
 

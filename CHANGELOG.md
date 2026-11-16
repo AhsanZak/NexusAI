@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0] - 2026-11-16
+
+### Added
+
+- Olist Brazilian e-commerce snapshot, downloaded with kagglehub and loaded into PostgreSQL. The nine original CSVs stay gitignored.
+- Analytics page for monthly sales, category revenue, review scores, payments, and delivery performance.
+
 ## [0.3.0] - 2026-11-16
 
 ### Added

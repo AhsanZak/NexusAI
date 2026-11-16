@@ -36,8 +36,8 @@ export function OverviewPage() {
     <div>
       <Typography.Title level={3}>Platform overview</Typography.Title>
       <Typography.Paragraph>
-        Public World Bank indicators and reports, loaded into PostgreSQL. The series are a 2000–2024
-        extract for twelve countries, not a live feed from a private database.
+        Public World Bank indicators are charted here. Olist sales, reviews, and delivery from the
+        2016–2018 Kaggle snapshot are on Analytics.
       </Typography.Paragraph>
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         {(loading ? placeholderChecks : checks).map((check) => (

@@ -11,6 +11,7 @@ import { Layout, Menu, Typography } from "antd";
 import { useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 
+import { AnalyticsPage } from "../pages/AnalyticsPage";
 import { DebugPage } from "../pages/DebugPage";
 import { OverviewPage } from "../pages/OverviewPage";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
@@ -65,15 +66,7 @@ export function AppShell() {
                 />
               }
             />
-            <Route
-              path="/analytics"
-              element={
-                <PlaceholderPage
-                  title="NL2SQL analytics"
-                  milestone="Read-only natural-language queries over the Olist warehouse"
-                />
-              }
-            />
+            <Route path="/analytics" element={<AnalyticsPage />} />
             <Route
               path="/agents"
               element={
