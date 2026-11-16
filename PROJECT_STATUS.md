@@ -4,7 +4,7 @@ Last updated: 2026-11-16
 
 ## Current milestone
 
-**M0 Foundation — implemented and checked locally.** Publishing `main` to GitHub still depends on a valid login for `AhsanZak`.
+**M0 Foundation — implemented, checked locally, and pushed to [main](https://github.com/AhsanZak/NexusAI).**
 
 The repository contains the runnable skeleton: FastAPI health endpoints, Alembic with the pgvector extension, a React and Ant Design shell, and a Docker Compose file for PostgreSQL, the API, and the dashboard.
 
@@ -51,7 +51,6 @@ The repository contains the runnable skeleton: FastAPI health endpoints, Alembic
 ## Blockers
 
 - This user cannot access `/var/run/docker.sock`, so the Compose stack has not been started here. Join the `docker` group, or run Compose with a privileged Docker session, then `docker compose up --build`.
-- GitHub push needs a valid login for `AhsanZak`. The saved `gh` token was invalid at the start of this milestone.
 - `LANGSMITH_API_KEY` is required before M11 can be marked complete. Tracing will no-op until then.
 - `SEC_USER_AGENT` is required before EDGAR downloads.
 - Olist CSVs need a Kaggle token or a manual drop in `data/raw/olist/`. The files stay gitignored.
