@@ -4,19 +4,22 @@ Last updated: 2026-11-16
 
 ## Current milestone
 
-**M0 Foundation is on `main`.** OpenAI debugging was added after that: the LiteLLM gateway, trace storage, and the `/debug` page.
+**World Bank public data is loaded into local PostgreSQL and shown on the main page.**
 
-The gateway calls `chat-default`. The default model is `openai/gpt-4o-mini`. `OPENAI_API_KEY` is unset, so a live OpenAI answer was not requested. In the browser, `/debug` showed the gateway as not configured, accepted a test prompt, and opened a trace whose error was `OPENAI_API_KEY is not set`. Unit tests cover a successful fake call without contacting OpenAI.
+On 16 November 2026 the loader stored 1,750 indicator observations (GDP, inflation, population, employment ratio, imports, and exports, 2000–2024, twelve countries) and 12 World Development Report records. The database is a user-owned PostgreSQL 18 cluster on `127.0.0.1:5433` because this account cannot access the Docker socket and the system PostgreSQL on port 5432 requires a password that is not available. pgvector is not installed in that cluster. Docker Compose remains the path when Docker is usable.
+
+Olist is not loaded: the Kaggle download needs a Kaggle API token or the nine CSVs placed in `data/raw/olist/`. SEC filings are not loaded: `SEC_USER_AGENT` is unset. Synthetic organizations are not generated yet.
 
 The repository contains the runnable skeleton: FastAPI health endpoints, Alembic with the pgvector extension, a React and Ant Design shell, and a Docker Compose file for PostgreSQL, the API, and the dashboard.
 
 ## Verification on 2026-11-16
 
-- Backend, Python 3.12 via `uv`: pytest 5 passed, Ruff clean, mypy clean.
-- Frontend: ESLint clean, `tsc --noEmit` clean, Vite production build succeeded.
-- Browser: overview at `http://127.0.0.1:5173/` showed API up. PostgreSQL showed down because Postgres was not running. `/documents` rendered the document-intelligence placeholder.
-- `GET /api/v1/health` returned 200. `GET /api/v1/health/ready` returned 503 with `database unavailable`, which matches the dashboard.
-- `docker compose up` was not run. The Docker CLI can see the daemon socket, and this user is denied access to it. Compose itself is installed.
+- Backend, Python 3.12 via `uv`: pytest 16 passed, Ruff clean, mypy clean.
+- Frontend: ESLint clean and the Vite production build succeeded before this load. The running dashboard is the Vite dev server.
+- `python -m app.ingestion.worldbank` finished with 1,750 observations, 12 documents, and no errors.
+- `GET /api/v1/health/ready` returned database up against `127.0.0.1:5433`.
+- Browser at `http://127.0.0.1:5173/`: the overview showed 1,750 observations, 12 reports, and 12 country lines for GDP. Switching the selector to inflation changed the scale label to "Percent" and kept 12 lines. `/documents` still opened the document-intelligence page.
+- `docker compose up` was not run. This user is denied access to the Docker socket.
 
 ## Milestone roadmap
 
@@ -29,8 +32,8 @@ The repository contains the runnable skeleton: FastAPI health endpoints, Alembic
 | M4 Olist warehouse | Schema, validated CSV load, read-only SQL role | Not started |
 | M5 NL2SQL | Guarded SQL, charts, Olist execution-accuracy set | Not started |
 | M6 Documents | Upload, chunk, embed, authorization before content | Not started |
-| M7 Public documents | Bounded SEC EDGAR and World Bank document ingestion | Not started |
-| M8 World Bank indicators | API ingest, history, country charts | Not started |
+| M7 Public documents | Bounded SEC EDGAR and World Bank document ingestion | World Bank report metadata is loaded. SEC and PDF embeddings are not. |
+| M8 World Bank indicators | API ingest, history, country charts | Loaded for twelve countries, 2000–2024. Natural-language queries are not built. |
 | M9 Knowledge assistant | Permission-aware RAG, citations, streaming | Not started |
 | M10 Agents | Research, analyst, and report agents, approval-gated PDF | Not started |
 | M11 Evaluation | LangSmith datasets for RAG, NL2SQL, and agents | Not started |

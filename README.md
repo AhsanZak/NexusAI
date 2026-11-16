@@ -8,9 +8,13 @@ The public repository is [AhsanZak/NexusAI](https://github.com/AhsanZak/NexusAI)
 
 - `GET /api/v1/health` reports that the API process is up.
 - `GET /api/v1/health/ready` reports that PostgreSQL accepts a query.
-- Alembic enables the `vector` extension on startup.
+- Alembic enables the `vector` extension when PostgreSQL has it installed.
 - The dashboard at `http://localhost:8080` shows API and database status.
-- `http://localhost:8080/debug` is the OpenAI debug page. It lists every gateway call and can send a test prompt. Set `OPENAI_API_KEY` before expecting a live answer. The key is never displayed.
+- The main page charts World Bank indicators stored in PostgreSQL and lists public World Bank reports. Set the API at the local cluster before starting it outside Compose:
+
+```bash
+export NEXUS_DATABASE_URL=postgresql+asyncpg://nexus:nexus@127.0.0.1:5433/nexusai
+```
 
 Authentication, OpenFGA, document ingestion, RAG, NL2SQL, and agents are not implemented yet. OpenAI chat calls go through the LiteLLM gateway and are visible on the debug page. See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [docs/LLM_GATEWAY.md](docs/LLM_GATEWAY.md).
 
@@ -67,4 +71,4 @@ npm run build
 
 ## Data
 
-No public dataset is loaded in this milestone. Licences and download rules are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). Raw files under `data/raw/` are gitignored.
+World Bank indicator history and a page of World Development Reports are loaded by `python -m app.ingestion.worldbank`. Olist, SEC EDGAR, and synthetic organizations are not loaded. Licences and download rules are in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). Raw files under `data/raw/` are gitignored.

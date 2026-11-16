@@ -35,17 +35,25 @@ Downloads stay blocked until `SEC_USER_AGENT` is set.
 - Series: GDP, inflation, population, employment, imports, and exports for a fixed country list
 - Terms: [CC BY 4.0](https://data.worldbank.org/summary-terms-of-use) with attribution to the World Bank and the source named in the indicator metadata. Do not imply World Bank endorsement.
 
-Example shape, not a live call from this milestone:
+Example call used by the loader. The JSON history pages were returning HTTP 502 on 16 November 2026, so ingestion downloads the official CSV extract instead and keeps 2000–2024 for twelve countries:
 
 ```text
-https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD?format=json
+https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv
+```
+
+Run it against the local database:
+
+```bash
+export NEXUS_DATABASE_URL=postgresql+asyncpg://nexus:nexus@127.0.0.1:5433/nexusai
+cd backend
+.venv/bin/python -m app.ingestion.worldbank
 ```
 
 ## World Bank documents
 
 - API: [Documents and Reports](https://documents.worldbank.org/en/publication/documents-reports/api)
-- Endpoint used later: `https://search.worldbank.org/api/v3/wds`
-- Scope: a bounded set of public PDFs, each stored with title, date, and URL
+- Endpoint: `https://search.worldbank.org/api/v3/wds`
+- The loader stores a bounded page of World Development Report records: title, date, abstract, page URL, and PDF URL. Full PDF text, embeddings, and citation answers are not built yet.
 
 Respect the World Bank [terms and conditions](https://www.worldbank.org/ext/en/legal/terms-conditions) on API volume. The job will be manual first, then scheduled, and it will not crawl without a page cap.
 

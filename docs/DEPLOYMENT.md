@@ -12,6 +12,16 @@ The API image is Python 3.12. The host interpreter is not used. The dashboard im
 
 If `docker compose` reports permission denied on `/var/run/docker.sock`, this user cannot talk to the Docker daemon. Join the `docker` group and open a new login session. This repository does not change host permissions.
 
+## Local PostgreSQL without Docker
+
+This machine cannot access `/var/run/docker.sock`, and pgvector is not installed in the Ubuntu PostgreSQL 18 packages. A separate cluster for NexusAI listens on `127.0.0.1:5433`. Its files are in `/home/smartnet/.local/share/nexusai/pgdata`, outside the git repository. The role and database are `nexus` / `nexusai`, with the local password from `.env.example`.
+
+```bash
+/usr/lib/postgresql/18/bin/pg_ctl -D /home/smartnet/.local/share/nexusai/pgdata -l /home/smartnet/.local/share/nexusai/postgres.log start
+export NEXUS_DATABASE_URL=postgresql+asyncpg://nexus:nexus@127.0.0.1:5433/nexusai
+cd backend && .venv/bin/alembic upgrade head && .venv/bin/python -m app.ingestion.worldbank
+```
+
 ## Start
 
 From the repository root:

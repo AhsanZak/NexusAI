@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0] - 2026-11-16
+
+### Added
+
+- World Bank indicator history for GDP, inflation, population, employment, imports, and exports, loaded from the public CSV extracts into PostgreSQL.
+- Twelve World Bank Documents & Reports records, with title, date, abstract, and source URL.
+- Main-page charts and a document list for that warehouse.
+
 ## [0.2.0] - 2026-11-16
 
 ### Added

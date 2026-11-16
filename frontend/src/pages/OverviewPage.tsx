@@ -2,6 +2,7 @@ import { Card, Col, Row, Tag, Typography } from "antd";
 import { useEffect, useState } from "react";
 
 import { loadServiceChecks, type ServiceCheck } from "../api/health";
+import { WorldBankPanel } from "./WorldBankPanel";
 
 const tagColor: Record<ServiceCheck["state"], string> = {
   up: "success",
@@ -35,10 +36,10 @@ export function OverviewPage() {
     <div>
       <Typography.Title level={3}>Platform overview</Typography.Title>
       <Typography.Paragraph>
-        This is the foundation milestone. The API, PostgreSQL with pgvector, and this dashboard run
-        together. Authentication, documents, retrieval, and agents are not available yet.
+        Public World Bank indicators and reports, loaded into PostgreSQL. The series are a 2000–2024
+        extract for twelve countries, not a live feed from a private database.
       </Typography.Paragraph>
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         {(loading ? placeholderChecks : checks).map((check) => (
           <Col xs={24} md={12} key={check.name}>
             <Card title={check.name} loading={loading}>
@@ -50,6 +51,7 @@ export function OverviewPage() {
           </Col>
         ))}
       </Row>
+      <WorldBankPanel />
     </div>
   );
 }
