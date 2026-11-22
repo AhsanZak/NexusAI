@@ -7,15 +7,32 @@ from pydantic import BaseModel, Field
 from app.models.llm_trace import LLMTrace
 
 
+class ProviderStatus(BaseModel):
+    id: str
+    name: str
+    state: str
+    active: bool
+    detail: str
+
+
 class GatewayStatusResponse(BaseModel):
     provider: str
     model_alias: str
     model: str
+    api_base: str
+    active_label: str
     configured: bool
     timeout_seconds: float
     max_retries: int
     trace_dialect: str
     trace_count: int
+
+
+class ProviderStatusResponse(BaseModel):
+    active_label: str
+    model: str
+    api_base: str
+    providers: list[ProviderStatus]
 
 
 class TraceResponse(BaseModel):

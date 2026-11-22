@@ -29,6 +29,29 @@ def scrub(value: str | None) -> str | None:
     return _SECRET.sub("[redacted]", value)
 
 
+def _scrub_secret(value: str, secret: str) -> str | None:
+    cleaned = value
+    token = secret.strip()
+    if token:
+        cleaned = cleaned.replace(token, "[redacted]")
+    return scrub(cleaned)
+
+
+def _is_litellm_proxy(api_base: str) -> bool:
+    return ":4000" in api_base.lower()
+
+
+def _gateway_api_key(settings: Settings, api_base: str) -> str:
+    """Choose the credential for this route. The proxy key never goes to Ollama or OpenAI."""
+    if _is_litellm_proxy(api_base):
+        return settings.litellm_master_key
+    if api_base:
+        return "local-free"
+    if settings.chat_provider == "openai":
+        return settings.openai_api_key
+    return ""
+
+
 def scrub_messages(messages: list[dict[str, str]]) -> list[dict[str, str]]:
     cleaned: list[dict[str, str]] = []
     for message in messages:
@@ -46,6 +69,7 @@ async def call_model(
     model: str,
     messages: list[dict[str, str]],
     api_key: str,
+    api_base: str,
     timeout: float,
     num_retries: int,
 ) -> Any:
@@ -62,6 +86,8 @@ async def call_model(
     }
     if api_key:
         kwargs["api_key"] = api_key
+    if api_base:
+        kwargs["api_base"] = api_base
     return await acompletion(**kwargs)
 
 
@@ -95,24 +121,42 @@ async def complete(
         request_messages=stored_messages,
     )
 
-    if active.chat_provider == "openai" and not active.openai_configured:
+    local_base = active.chat_api_base.strip()
+    hosted_openai = active.chat_provider == "openai" and not local_base
+    if "api.openai.com" in local_base.lower():
+        base.error_type = "billing_blocked"
+        base.error_message = "Refusing api.openai.com because that endpoint spends credits"
+        base.latency_ms = round((time.perf_counter() - started) * 1000, 2)
+        saved = await save_trace(base)
+        raise LLMCallError(saved)
+    if hosted_openai and not active.openai_configured:
         base.error_type = "not_configured"
         base.error_message = "OPENAI_API_KEY is not set"
         base.latency_ms = round((time.perf_counter() - started) * 1000, 2)
         saved = await save_trace(base)
         raise LLMCallError(saved)
 
+    proxy = _is_litellm_proxy(local_base)
+    if proxy and not active.litellm_master_key.strip():
+        base.error_type = "not_configured"
+        base.error_message = "LITELLM_MASTER_KEY is not set"
+        base.latency_ms = round((time.perf_counter() - started) * 1000, 2)
+        saved = await save_trace(base)
+        raise LLMCallError(saved)
+
     try:
+        provider_key = _gateway_api_key(active, local_base)
         response = await call_model(
             model=active.chat_model,
             messages=stored_messages,
-            api_key=active.openai_api_key,
+            api_key=provider_key,
+            api_base=local_base,
             timeout=active.llm_timeout_seconds,
             num_retries=active.llm_max_retries,
         )
     except Exception as exc:
         base.error_type = type(exc).__name__
-        base.error_message = scrub(str(exc))
+        base.error_message = _scrub_secret(str(exc), active.litellm_master_key)
         base.latency_ms = round((time.perf_counter() - started) * 1000, 2)
         log.warning("llm_call_failed", error_type=base.error_type, source=source)
         saved = await save_trace(base)

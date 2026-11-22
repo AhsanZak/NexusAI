@@ -4,6 +4,7 @@ import type { TableColumnsType } from "antd";
 import { useCallback, useEffect, useState } from "react";
 
 import { loadGatewayStatus, loadTraces, sendDebugPrompt, type GatewayStatus, type LlmTrace } from "../api/debug";
+import { ModelRouteBar } from "../components/ModelRouteBar";
 
 export function DebugPage() {
   const [status, setStatus] = useState<GatewayStatus | null>(null);
@@ -90,30 +91,24 @@ export function DebugPage() {
   return (
     <div>
       <Typography.Title level={3}>
-        <BugOutlined /> OpenAI debug
+        <BugOutlined /> Model status
       </Typography.Title>
       <Typography.Paragraph>
-        Every chat call that passes through the model gateway is stored here: the prompt, the
-        response, token counts, latency, and the error when the call fails. The API key is not
-        stored and is not shown on this page.
+        The label below is the route that answers chat. Green means that option responded to a
+        status check. Red means it did not. Refresh runs the checks again. A test prompt uses only
+        the route marked in use.
       </Typography.Paragraph>
-
       {statusError ? <Alert type="error" showIcon message={statusError} style={{ marginBottom: 16 }} /> : null}
-      {status && !status.configured ? (
-        <Alert
-          type="warning"
-          showIcon
-          style={{ marginBottom: 16 }}
-          message="OpenAI is not configured"
-          description="Set OPENAI_API_KEY in the environment or in a local .env file, then restart the API. A test prompt still records a trace so you can see the failure."
-        />
-      ) : null}
+      <Card style={{ marginBottom: 16 }}>
+        <ModelRouteBar />
+      </Card>
 
       <Card title="Gateway" style={{ marginBottom: 16 }}>
         <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small">
           <Descriptions.Item label="Alias">{status?.model_alias ?? "—"}</Descriptions.Item>
           <Descriptions.Item label="Model">{status?.model ?? "—"}</Descriptions.Item>
-          <Descriptions.Item label="Provider">{status?.provider ?? "—"}</Descriptions.Item>
+          <Descriptions.Item label="In use">{status?.active_label ?? "—"}</Descriptions.Item>
+          <Descriptions.Item label="API base">{status?.api_base || "api.openai.com"}</Descriptions.Item>
           <Descriptions.Item label="Configured">
             <Tag color={status?.configured ? "success" : "warning"}>{status?.configured ? "yes" : "no"}</Tag>
           </Descriptions.Item>
@@ -130,10 +125,10 @@ export function DebugPage() {
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
             rows={4}
-            placeholder="Ask a short question to verify the OpenAI connection."
+            placeholder="Ask a short question. It goes to the route marked in use."
           />
           <Button type="primary" onClick={() => void onSend()} loading={sending} disabled={!prompt.trim()}>
-            Send through OpenAI
+            Send through the active model
           </Button>
         </Space>
       </Card>

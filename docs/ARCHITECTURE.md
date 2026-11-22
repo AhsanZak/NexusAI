@@ -22,7 +22,7 @@ flowchart LR
   API --> Smith
 ```
 
-The `worldbank` schema holds indicator observations and document metadata. Solid boxes in the running application today are the dashboard, the API, PostgreSQL, and the OpenAI path through LiteLLM. JWT, OpenFGA, the LiteLLM proxy process, Ollama, and LangSmith are the remaining seams. The debug page reads `llm_traces` and does not call OpenAI except when you send a test prompt.
+The `worldbank` schema holds indicator observations and document metadata. Solid boxes in the running application today are the dashboard, the API, PostgreSQL, and the OpenAI path through LiteLLM. JWT, OpenFGA, the LiteLLM proxy process, Ollama, and LangSmith are the remaining seams. The Admin page runs an OpenFGA Check for two demo users before it returns document text. The debug page reads `llm_traces`.
 
 ## Why the split looks like this
 

@@ -2,11 +2,28 @@ export interface GatewayStatus {
   provider: string;
   model_alias: string;
   model: string;
+  api_base: string;
+  active_label: string;
   configured: boolean;
   timeout_seconds: number;
   max_retries: number;
   trace_dialect: string;
   trace_count: number;
+}
+
+export interface ProviderCheck {
+  id: string;
+  name: string;
+  state: "up" | "down";
+  active: boolean;
+  detail: string;
+}
+
+export interface ProviderReport {
+  active_label: string;
+  model: string;
+  api_base: string;
+  providers: ProviderCheck[];
 }
 
 export interface LlmTrace {
@@ -47,6 +64,10 @@ async function readJson<T>(path: string): Promise<T> {
 
 export function loadGatewayStatus(): Promise<GatewayStatus> {
   return readJson<GatewayStatus>("/api/v1/debug/openai");
+}
+
+export function loadProviderStatus(): Promise<ProviderReport> {
+  return readJson<ProviderReport>("/api/v1/debug/providers");
 }
 
 export function loadTraces(status: string): Promise<TraceList> {

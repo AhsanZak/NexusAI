@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0] - 2026-11-22
+
+### Added
+
+- OpenFGA example with two users: a shared viewer permission on the World Bank indicators, analyst access for Amina Rahman on the Olist warehouse, and auditor access for Luis Ortega on the finance notes.
+- Admin page that shows each Check result and withholds document text after a denial.
+- OpenFGA 1.23 service in Docker Compose, published on port 8090.
+
 ## [0.4.0] - 2026-11-16
 
 ### Added

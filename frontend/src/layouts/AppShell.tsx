@@ -11,6 +11,8 @@ import { Layout, Menu, Typography } from "antd";
 import { useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 
+import { ModelRouteBar } from "../components/ModelRouteBar";
+import { AdminPage } from "../pages/AdminPage";
 import { AnalyticsPage } from "../pages/AnalyticsPage";
 import { DebugPage } from "../pages/DebugPage";
 import { OverviewPage } from "../pages/OverviewPage";
@@ -25,7 +27,7 @@ const items = [
   { key: "/analytics", icon: <BarChartOutlined />, label: <Link to="/analytics">Analytics</Link> },
   { key: "/agents", icon: <ApartmentOutlined />, label: <Link to="/agents">Agents</Link> },
   { key: "/admin", icon: <TeamOutlined />, label: <Link to="/admin">Admin</Link> },
-  { key: "/debug", icon: <BugOutlined />, label: <Link to="/debug">OpenAI debug</Link> },
+  { key: "/debug", icon: <BugOutlined />, label: <Link to="/debug">Model status</Link> },
 ];
 
 export function AppShell() {
@@ -42,8 +44,8 @@ export function AppShell() {
         <Menu mode="inline" selectedKeys={[selected]} items={items} />
       </Sider>
       <Layout>
-        <Header style={{ background: "#fff", padding: "0 24px", borderBottom: "1px solid #f0f0f0" }}>
-          <Typography.Text type="secondary">Enterprise knowledge, analytics, and automation</Typography.Text>
+        <Header style={{ background: "#fff", padding: "12px 24px", height: "auto", lineHeight: "normal", borderBottom: "1px solid #f0f0f0" }}>
+          <ModelRouteBar compact />
         </Header>
         <Content style={{ margin: 24 }}>
           <Routes>
@@ -76,15 +78,7 @@ export function AppShell() {
                 />
               }
             />
-            <Route
-              path="/admin"
-              element={
-                <PlaceholderPage
-                  title="Administration"
-                  milestone="Organizations, users, departments, and OpenFGA permissions"
-                />
-              }
-            />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="/debug" element={<DebugPage />} />
           </Routes>
         </Content>

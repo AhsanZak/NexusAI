@@ -1,9 +1,13 @@
 """Application settings loaded from the environment."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# The API is often started from backend/, while the local secret file lives at the repo root.
+_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 
 
 class Settings(BaseSettings):
@@ -11,7 +15,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="NEXUS_",
-        env_file=".env",
+        env_file=_ENV_FILE,
         extra="ignore",
     )
 
@@ -22,6 +26,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://localhost:8080"
     chat_alias: str = "chat-default"
     chat_model: str = "openai/gpt-4o-mini"
+    chat_api_base: str = ""
     llm_timeout_seconds: float = 60
     llm_max_retries: int = 2
     trace_database_url: str = "sqlite+aiosqlite:///./data/debug/llm_traces.db"
@@ -29,6 +34,13 @@ class Settings(BaseSettings):
         default="",
         repr=False,
         validation_alias=AliasChoices("OPENAI_API_KEY", "NEXUS_OPENAI_API_KEY"),
+    )
+    openfga_api_url: str = "http://127.0.0.1:8090"
+    openfga_store_name: str = "nexusai"
+    litellm_master_key: str = Field(
+        default="",
+        repr=False,
+        validation_alias=AliasChoices("LITELLM_MASTER_KEY", "NEXUS_LITELLM_MASTER_KEY"),
     )
 
     @property

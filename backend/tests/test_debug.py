@@ -62,7 +62,7 @@ def test_secret_text_is_scrubbed() -> None:
 async def test_missing_key_is_stored_as_an_error_trace(
     trace_store: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "")
     get_settings.cache_clear()
 
     with pytest.raises(LLMCallError) as caught:
@@ -90,6 +90,7 @@ async def test_successful_call_stores_usage_and_hides_the_key(
     )
 
     assert seen["api_key"] == "sk-test-value-not-real"
+    assert seen["api_base"] == ""
     assert seen["model"] == "openai/gpt-4o-mini"
     assert seen["num_retries"] == 2
     assert trace.status == "success"
@@ -97,6 +98,53 @@ async def test_successful_call_stores_usage_and_hides_the_key(
     assert trace.provider_response_id == "chatcmpl-test"
     assert trace.total_tokens == 10
     assert trace.request_messages[0]["content"] == "ping [redacted]"
+
+
+@pytest.mark.asyncio
+async def test_local_openai_compatible_model_does_not_receive_the_openai_key(
+    trace_store: None, openai_key: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("NEXUS_CHAT_MODEL", "openai/qwen2.5:3b")
+    monkeypatch.setenv("NEXUS_CHAT_API_BASE", "http://127.0.0.1:11434/v1")
+    get_settings.cache_clear()
+    seen: dict[str, object] = {}
+
+    async def fake_call(**kwargs: object) -> _Response:
+        seen.update(kwargs)
+        return _Response()
+
+    monkeypatch.setattr("app.ai.gateway.call_model", fake_call)
+    trace = await complete([{"role": "user", "content": "ping"}], source="unit")
+
+    assert seen["api_base"] == "http://127.0.0.1:11434/v1"
+    assert seen["api_key"] == "local-free"
+    assert "sk-" not in str(seen["api_key"])
+    assert trace.status == "success"
+    assert trace.response_text == "pong"
+
+
+@pytest.mark.asyncio
+async def test_proxy_route_sends_the_master_key_only(
+    trace_store: None, openai_key: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("NEXUS_CHAT_MODEL", "openai/chat-default")
+    monkeypatch.setenv("NEXUS_CHAT_API_BASE", "http://127.0.0.1:4000")
+    monkeypatch.setenv("LITELLM_MASTER_KEY", "sk-test-proxy-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-value-not-real")
+    get_settings.cache_clear()
+    seen: dict[str, object] = {}
+
+    async def fake_call(**kwargs: object) -> _Response:
+        seen.update(kwargs)
+        return _Response()
+
+    monkeypatch.setattr("app.ai.gateway.call_model", fake_call)
+    trace = await complete([{"role": "user", "content": "ping"}], source="unit")
+
+    assert seen["model"] == "openai/chat-default"
+    assert seen["api_base"] == "http://127.0.0.1:4000"
+    assert seen["api_key"] == "sk-test-proxy-key"
+    assert trace.status == "success"
 
 
 @pytest.mark.asyncio

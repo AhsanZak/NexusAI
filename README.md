@@ -17,7 +17,7 @@ The public repository is [AhsanZak/NexusAI](https://github.com/AhsanZak/NexusAI)
 export NEXUS_DATABASE_URL=postgresql+asyncpg://nexus:nexus@127.0.0.1:5433/nexusai
 ```
 
-Authentication, OpenFGA, document ingestion, RAG, NL2SQL, and agents are not implemented yet. OpenAI chat calls go through the LiteLLM gateway and are visible on the debug page. See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [docs/LLM_GATEWAY.md](docs/LLM_GATEWAY.md).
+The Admin page asks OpenFGA whether two demo users may see three documents. They share viewer access to the World Bank indicators. The sales analyst alone can read the Olist warehouse text, and the finance reviewer alone can read the finance notes. Login, document ingestion, RAG, NL2SQL, and agents are not implemented yet. Chat calls go through the LiteLLM gateway and are visible on the model status page. See [PROJECT_STATUS.md](PROJECT_STATUS.md), [docs/OPENFGA_MODEL.md](docs/OPENFGA_MODEL.md), and [docs/LLM_GATEWAY.md](docs/LLM_GATEWAY.md).
 
 ## Run locally
 

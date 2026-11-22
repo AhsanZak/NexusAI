@@ -26,8 +26,8 @@ The repository contains the runnable skeleton: FastAPI health endpoints, Alembic
 | --- | --- | --- |
 | M0 Foundation | Compose file, health API, dashboard shell, docs | Complete, except the Compose process was not started on this machine |
 | M1 Identity and tenancy | JWT, organizations, departments, users, synthetic seed | Not started |
-| M2 OpenFGA | Authorization model, tuple sync, service-layer checks | Not started |
-| M3 LiteLLM gateway | Ollama aliases and the LiteLLM proxy process. OpenAI chat and the debug page are already in place. | Partial |
+| M2 OpenFGA | Authorization model, tuple sync, service-layer checks | Demo on the Admin page. JWT and tenant tuple sync are not built. |
+| M3 LiteLLM gateway | Ollama alias `chat-default` on the LiteLLM proxy, with the API calling port 4000. | Proxy route wired to local Ollama |
 | M4 Olist warehouse | Schema, validated CSV load, read-only SQL role | Loaded. The read-only SQL role is not created yet. |
 | M5 NL2SQL | Guarded SQL, charts, Olist execution-accuracy set | Charts are SQL reports. Natural-language queries are not built. |
 | M6 Documents | Upload, chunk, embed, authorization before content | Not started |
@@ -46,7 +46,7 @@ The repository contains the runnable skeleton: FastAPI health endpoints, Alembic
 | [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) | M0 |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | M0 |
 | docs/DATABASE_SCHEMA.md | M4 |
-| docs/OPENFGA_MODEL.md | M2 |
+| [docs/OPENFGA_MODEL.md](docs/OPENFGA_MODEL.md) | M2 demo |
 | [docs/LLM_GATEWAY.md](docs/LLM_GATEWAY.md) | OpenAI gateway and debug traces |
 | docs/RAG_PIPELINE.md | M9 |
 | docs/NL2SQL.md | M5 |

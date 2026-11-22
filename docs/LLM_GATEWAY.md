@@ -1,19 +1,19 @@
 # LLM gateway
 
-NexusAI calls chat models through one module, `backend/app/ai/gateway.py`. Feature code passes the alias `chat-default`. That module is the only place that imports LiteLLM, and LiteLLM is the only place that talks to OpenAI.
+NexusAI calls chat models through one module, `backend/app/ai/gateway.py`. Feature code passes the alias `chat-default`. That module is the only place that imports LiteLLM. For local development the module calls the LiteLLM proxy on port 4000, and the proxy calls Ollama. The proxy configuration is `deploy/litellm_config.yaml`.
 
 ```mermaid
 flowchart LR
   DebugPage[OpenAI_debug_page]
   FutureCallers[Later_agents_and_RAG]
   Gateway[LLM_gateway]
-  LiteLLM[LiteLLM]
-  OpenAI[OpenAI_API]
+  LiteLLM[LiteLLM_proxy]
+  Ollama[Ollama]
   TraceStore[(llm_traces)]
   DebugPage --> Gateway
   FutureCallers --> Gateway
   Gateway --> LiteLLM
-  LiteLLM --> OpenAI
+  LiteLLM --> Ollama
   Gateway --> TraceStore
   DebugPage --> TraceStore
 ```
@@ -23,9 +23,11 @@ flowchart LR
 Provider SDKs change, and a later Bedrock or Ollama model should not require a rewrite of the assistant. The alias and the concrete model are settings:
 
 - `NEXUS_CHAT_ALIAS` defaults to `chat-default`
-- `NEXUS_CHAT_MODEL` defaults to `openai/gpt-4o-mini`
+- `NEXUS_CHAT_MODEL` for the local proxy route is `openai/chat-default`
+- `NEXUS_CHAT_API_BASE` for that route is `http://127.0.0.1:4000`
+- The proxy maps `chat-default` to Ollama model `qwen2.5:3b`
 
-`OPENAI_API_KEY` is read from the environment. It is not a `NEXUS_` setting name, because that is the variable OpenAI and LiteLLM already use. The key is excluded from the settings representation, from logs, and from the trace table. Text that looks like an `sk-` secret is replaced with `[redacted]` before it is stored or sent.
+`OPENAI_API_KEY` is read from the environment and from the repository-root `.env`. It is not a `NEXUS_` setting name, because that is the variable OpenAI and LiteLLM already use. The key is excluded from the settings representation, from logs, and from the trace table. Text that looks like an `sk-` secret is replaced with `[redacted]` before it is stored or sent.
 
 Timeouts and retries are `NEXUS_LLM_TIMEOUT_SECONDS` and `NEXUS_LLM_MAX_RETRIES`. LiteLLM performs the retries. One trace row is written for the finished attempt, including the failure if the retries are exhausted.
 
@@ -39,7 +41,7 @@ Local runs store traces in SQLite at `data/debug/llm_traces.db`, which is gitign
 
 ## What this does not do yet
 
-Ollama, the LiteLLM proxy process, and LangSmith export are still later milestones. The in-app page is the debugger for OpenAI calls today. Calls made with a real key also appear in the OpenAI platform usage logs, because they are ordinary API requests. That platform does not show the prompt body the way this page does.
+The in-app page records every call the API sends to the proxy. The proxy's own spend log records the same call only after it arrives on port 4000. LangSmith export is still a later milestone. A direct call to Ollama on port 11434 does not appear in the proxy log.
 
 ## How to test
 

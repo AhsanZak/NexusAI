@@ -1,0 +1,19 @@
+# LiteLLM proxy model list for local development.
+# The proxy is the only process that maps chat-default to a real model.
+# api_base is the host address as seen from the proxy container, which is the
+# Docker bridge gateway on this machine. Ollama must listen beyond 127.0.0.1
+# so that address can reach it.
+
+model_list:
+  - model_name: chat-default
+    litellm_params:
+      model: ollama/qwen2.5:3b
+      api_base: http://172.19.0.1:11434
+      drop_params: true
+
+litellm_settings:
+  telemetry: false
+  drop_params: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
