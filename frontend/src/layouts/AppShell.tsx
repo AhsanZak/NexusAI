@@ -62,14 +62,14 @@ export function AppShell() {
 
   return (
     <ChatModelProvider>
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout className="app-shell">
       <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="light" width={220}>
         <Typography.Title level={4} style={{ margin: "16px 20px" }}>
           {collapsed ? "N" : "NexusAI"}
         </Typography.Title>
         <Menu mode="inline" selectedKeys={[selected]} items={items} />
       </Sider>
-      <Layout>
+      <Layout className="app-main">
         <Header
           style={{
             background: "#fff",
@@ -86,7 +86,7 @@ export function AppShell() {
             <CurrentUser />
           </div>
         </Header>
-        <Content style={{ margin: 24 }}>
+        <Content className="app-content">
           <Routes>
             <Route path="/" element={admin ? <OverviewPage /> : <MemberHomePage />} />
             <Route path="/documents" element={<DocumentsPage />} />
