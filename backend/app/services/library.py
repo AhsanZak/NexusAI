@@ -18,9 +18,10 @@ from app.knowledge import infer_space, require_file
 from app.models.access_grant import AccessGrant
 from app.models.upload import DocumentChunk, UploadedDocument
 from app.models.user import User
-from app.repositories.grants import list_grants, list_users_by_id
+from app.repositories.grants import delete_grant, insert_grant, list_grants, list_users_by_id
 from app.repositories.uploads import (
     chunks_for,
+    delete_document,
     get_document,
     insert_chunks,
     insert_document,
@@ -54,6 +55,10 @@ class DocumentAccessError(Exception):
 
 class DocumentNotFound(Exception):
     """No uploaded document has this id."""
+
+
+class DocumentOwnerError(Exception):
+    """Only the account that uploaded the file can delete it."""
 
 
 def upload_object(document_id: uuid.UUID) -> str:
@@ -206,6 +211,30 @@ async def unshare_document(
             await delete_permission(client, grant.id)
             return
     raise DocumentNotFound(str(document_id))
+
+
+async def delete_upload(user: User, document_id: uuid.UUID, client: OpenFGAClient) -> None:
+    """Remove an owned file, its grants, and every chat about that file."""
+    document = await get_document(document_id)
+    if document is None:
+        raise DocumentNotFound(str(document_id))
+    if document.owner_id != user.id:
+        raise DocumentOwnerError(document.filename)
+    target = upload_object(document.id)
+    grants = [grant for grant in await list_grants() if grant.object_id == target]
+    removed = [await delete_grant(grant.id) for grant in grants]
+    try:
+        await client.prepare()
+        await client.delete_tuples(
+            [(grant.subject, grant.relation, grant.object_id) for grant in removed]
+        )
+        storage_name = await delete_document(document.id)
+    except Exception:
+        for grant in removed:
+            await insert_grant(grant.subject, grant.user_id, grant.relation, grant.object_id)
+        raise
+    if storage_name:
+        (_upload_dir() / Path(storage_name).name).unlink(missing_ok=True)
 
 
 async def ensure_can_view(user: User, document_id: uuid.UUID) -> None:

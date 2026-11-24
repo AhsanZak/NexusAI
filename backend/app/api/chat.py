@@ -14,6 +14,7 @@ from app.ai.choices import (
     settings_for,
 )
 from app.api.auth import current_user
+from app.authz.client import OpenFGAError, get_openfga_client
 from app.core.config import Settings, get_settings
 from app.intent import label_for
 from app.models.user import User
@@ -35,7 +36,13 @@ from app.schemas.chat import (
     ModelUpdateRequest,
 )
 from app.services.chat_context import title_from
-from app.services.library import DocumentAccessError, DocumentNotFound, ensure_can_view
+from app.services.library import (
+    DocumentAccessError,
+    DocumentNotFound,
+    DocumentOwnerError,
+    delete_upload,
+    ensure_can_view,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -128,10 +135,31 @@ async def list_conversations(
 async def remove_conversation(
     conversation_id: uuid.UUID,
     user: Annotated[User, Depends(current_user)],
+    include_files: Annotated[bool, Query()] = False,
 ) -> None:
-    removed = await delete_conversation(user.id, conversation_id)
-    if not removed:
+    row = await conversation_for(user.id, conversation_id)
+    if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="That chat was not found")
+    if include_files and row.document_id is not None:
+        try:
+            await delete_upload(user, row.document_id, get_openfga_client())
+        except DocumentNotFound:
+            await delete_conversation(user.id, conversation_id)
+        except DocumentOwnerError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Only the owner can delete this file. "
+                    "Delete the chat on its own to keep the file."
+                ),
+            ) from exc
+        except OpenFGAError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The file could not be removed because access control is unavailable.",
+            ) from exc
+        return
+    await delete_conversation(user.id, conversation_id)
 
 
 @router.get("/history", response_model=list[ChatTurn])

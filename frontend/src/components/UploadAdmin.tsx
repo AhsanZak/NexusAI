@@ -1,3 +1,4 @@
+import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Alert, Button, Select, Space, Table, Typography } from "antd";
 import { useCallback, useEffect, useState } from "react";
 
@@ -100,7 +101,7 @@ export function UploadAdmin() {
                 .filter((user) => user.role === "member")
                 .map((user) => ({ value: user.id, label: `${user.display_name} · ${user.email}` }))}
             />
-            <Button type="primary" onClick={() => void onGrant()} disabled={!memberId}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => void onGrant()} disabled={!memberId}>
               Grant access
             </Button>
           </Space>
@@ -117,7 +118,7 @@ export function UploadAdmin() {
                 title: "",
                 render: (_, row) =>
                   row.owner ? null : (
-                    <Button size="small" danger onClick={() => void onRevoke(row.user_id)}>
+                    <Button size="small" danger icon={<DeleteOutlined />} onClick={() => void onRevoke(row.user_id)}>
                       Remove access
                     </Button>
                   ),

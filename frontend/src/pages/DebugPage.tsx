@@ -1,4 +1,4 @@
-import { BugOutlined } from "@ant-design/icons";
+import { BugOutlined, SendOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Descriptions, Drawer, Input, Select, Space, Table, Tag, Typography } from "antd";
 import type { TableColumnsType } from "antd";
 import { useCallback, useEffect, useState } from "react";
@@ -127,7 +127,13 @@ export function DebugPage() {
             rows={4}
             placeholder="Ask a short question. It goes to the route marked in use."
           />
-          <Button type="primary" onClick={() => void onSend()} loading={sending} disabled={!prompt.trim()}>
+          <Button
+            type="primary"
+            icon={<SendOutlined />}
+            onClick={() => void onSend()}
+            loading={sending}
+            disabled={!prompt.trim()}
+          >
             Send through the active model
           </Button>
         </Space>

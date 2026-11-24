@@ -69,8 +69,12 @@ export async function loadConversations(documentId?: string): Promise<ChatConver
   return (await response.json()) as ChatConversation[];
 }
 
-export async function deleteConversation(conversationId: string): Promise<void> {
-  const response = await fetch(`${apiBase}/api/v1/chat/conversations/${conversationId}`, {
+export async function deleteConversation(
+  conversationId: string,
+  includeFiles = false,
+): Promise<void> {
+  const query = includeFiles ? "?include_files=true" : "";
+  const response = await fetch(`${apiBase}/api/v1/chat/conversations/${conversationId}${query}`, {
     method: "DELETE",
     headers: authHeaders(),
   });

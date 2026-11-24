@@ -23,6 +23,7 @@ class KnowledgeConversation(BaseModel):
     space_label: str
     document_id: UUID | None
     filename: str | None
+    file_owned: bool
     intent_label: str | None
     updated_at: datetime
 

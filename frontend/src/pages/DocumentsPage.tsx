@@ -1,3 +1,4 @@
+import { ReloadOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Space, Tag, Typography } from "antd";
 import { useCallback, useEffect, useState } from "react";
 
@@ -39,7 +40,7 @@ export function DocumentsPage() {
         <Typography.Title level={3} style={{ margin: 0 }}>
           Documents for {access.display_name}
         </Typography.Title>
-        <Button onClick={() => void refresh()} loading={loading}>
+        <Button icon={<ReloadOutlined />} onClick={() => void refresh()} loading={loading}>
           Recheck
         </Button>
       </Space>

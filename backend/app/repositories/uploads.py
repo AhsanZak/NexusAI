@@ -67,6 +67,18 @@ async def get_document(document_id: uuid.UUID) -> UploadedDocument | None:
         return await session.get(UploadedDocument, document_id)
 
 
+async def delete_document(document_id: uuid.UUID) -> str | None:
+    """Remove the document row. Chunks and chats that point at it are removed too."""
+    async with SessionLocal() as session:
+        document = await session.get(UploadedDocument, document_id)
+        if document is None:
+            return None
+        storage_name = document.storage_name
+        await session.delete(document)
+        await session.commit()
+        return storage_name
+
+
 async def save_embeddings(
     document_id: uuid.UUID,
     embedding_kind: str,

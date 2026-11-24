@@ -12,6 +12,7 @@ async def knowledge_home(user: User) -> KnowledgeHome:
     documents = await list_documents()
     conversations = await recent_conversations(user.id)
     owned = [item for item in documents if item.owner_id == user.id]
+    owned_ids = {item.id for item in owned}
     names = {item.id: item.filename for item in documents}
     document_counts = {item.id: 0 for item in SPACES}
     conversation_counts = {item.id: 0 for item in SPACES}
@@ -41,6 +42,9 @@ async def knowledge_home(user: User) -> KnowledgeHome:
             space_label=_label(conversation.space),
             document_id=conversation.document_id,
             filename=names.get(conversation.document_id) if conversation.document_id else None,
+            file_owned=(
+                conversation.document_id in owned_ids if conversation.document_id else False
+            ),
             intent_label=label_for(conversation.intent),
             updated_at=conversation.updated_at,
         )

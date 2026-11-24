@@ -1,3 +1,4 @@
+import { ArrowRightOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Col, Row, Tag, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -52,7 +53,9 @@ export function MemberHomePage() {
               </Typography.Paragraph>
               {feature.allowed ? (
                 <Link to={feature.object_id === "feature:ai-model" ? "/assistant" : "/analytics"}>
-                  <Button type="primary">Open</Button>
+                  <Button type="primary" icon={<ArrowRightOutlined />}>
+                    Open
+                  </Button>
                 </Link>
               ) : null}
             </Card>

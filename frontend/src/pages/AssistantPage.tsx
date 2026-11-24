@@ -1,4 +1,4 @@
-import { RobotOutlined } from "@ant-design/icons";
+import { RobotOutlined, SendOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Input, Space, Tag, Typography } from "antd";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -133,7 +133,13 @@ export function AssistantPage() {
               placeholder="Ask about the documents this account can use"
               onChange={(event) => setPrompt(event.target.value)}
             />
-            <Button type="primary" onClick={() => void onAsk()} loading={sending} disabled={!prompt.trim()}>
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              onClick={() => void onAsk()}
+              loading={sending}
+              disabled={!prompt.trim()}
+            >
               Ask
             </Button>
           </Space>

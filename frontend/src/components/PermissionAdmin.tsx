@@ -1,3 +1,4 @@
+import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Alert, Button, Form, Popconfirm, Select, Table, Typography } from "antd";
 import { useCallback, useEffect, useState } from "react";
 
@@ -132,7 +133,7 @@ export function PermissionAdmin() {
             options={relations.map((item) => ({ value: item, label: item }))}
           />
         </Form.Item>
-        <Button type="primary" onClick={() => void onGrant()} disabled={!objectId || !relation}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => void onGrant()} disabled={!objectId || !relation}>
           Grant
         </Button>
       </Form>
@@ -171,7 +172,7 @@ export function PermissionAdmin() {
             width: 120,
             render: (_, grant) => (
               <Popconfirm title="Remove this permission?" onConfirm={() => void onRemove(grant)}>
-                <Button danger size="small">
+                <Button danger size="small" icon={<DeleteOutlined />}>
                   Remove
                 </Button>
               </Popconfirm>

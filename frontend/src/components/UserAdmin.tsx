@@ -1,3 +1,4 @@
+import { UserAddOutlined } from "@ant-design/icons";
 import { Alert, Button, Form, Input, Table, Typography } from "antd";
 import { useCallback, useEffect, useState } from "react";
 
@@ -62,7 +63,7 @@ export function UserAdmin() {
         <Form.Item label="Password" name="password" rules={[{ required: true, min: 8 }]}>
           <Input.Password />
         </Form.Item>
-        <Button type="primary" htmlType="submit">
+        <Button type="primary" htmlType="submit" icon={<UserAddOutlined />}>
           Add user
         </Button>
       </Form>

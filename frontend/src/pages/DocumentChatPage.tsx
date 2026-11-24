@@ -1,5 +1,5 @@
-import { FileAddOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Input, List, Space, Tag, Typography, Upload } from "antd";
+import { SendOutlined, UploadOutlined } from "@ant-design/icons";
+import { Alert, Avatar, Button, Card, Input, List, Space, Tag, Typography, Upload } from "antd";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
@@ -12,9 +12,11 @@ import {
 } from "../api/chat";
 import { loadKnowledgeHome, type KnowledgeSpace } from "../api/knowledge";
 import { askLibrary, loadLibrary, uploadLibraryFile, type LibraryDocument } from "../api/library";
+import { loadSession } from "../auth/session";
 import { useChatModel } from "../chat/models";
 import { ChatHistory } from "../components/ChatHistory";
 import { ConversationSidebar } from "../components/ConversationSidebar";
+import { SpaceIcon } from "../components/SpaceIcon";
 
 export function DocumentChatPage() {
   const { space = "" } = useParams();
@@ -139,7 +141,10 @@ export function DocumentChatPage() {
   return (
     <div>
       <Typography.Title level={3}>
-        <FileAddOutlined /> {meta?.label ?? "Knowledge"}
+        <Space>
+          <SpaceIcon space={space} />
+          {meta?.label ?? "Knowledge"}
+        </Space>
       </Typography.Title>
       <Typography.Paragraph>
         {meta?.summary ?? "Open a knowledge space from the dashboard."}{" "}
@@ -155,7 +160,7 @@ export function DocumentChatPage() {
           return false;
         }}
       >
-        <Button type="primary" loading={uploading} disabled={!meta}>
+        <Button type="primary" icon={<UploadOutlined />} loading={uploading} disabled={!meta}>
           Upload into {meta?.label ?? "this space"}
         </Button>
       </Upload>
@@ -171,14 +176,17 @@ export function DocumentChatPage() {
               setConversationId(null);
             }}
           >
-            <Space direction="vertical" size={2}>
-              <Space>
-                <Typography.Text strong>{item.filename}</Typography.Text>
-                {item.shared ? <Tag>Shared with you</Tag> : <Tag>Yours</Tag>}
+            <Space align="start">
+              <Avatar icon={<SpaceIcon space={item.space} />} style={{ background: "#f0f5ff", color: "#1677ff" }} />
+              <Space direction="vertical" size={2}>
+                <Space>
+                  <Typography.Text strong>{item.filename}</Typography.Text>
+                  {item.shared ? <Tag color="blue">Shared with you</Tag> : <Tag color="green">Yours</Tag>}
+                </Space>
+                <Typography.Text type="secondary">
+                  {item.owner_name} · {item.extractor} · {item.excerpt}
+                </Typography.Text>
               </Space>
-              <Typography.Text type="secondary">
-                {item.owner_name} · {item.extractor} · {item.excerpt}
-              </Typography.Text>
             </Space>
           </List.Item>
         )}
@@ -208,6 +216,27 @@ export function DocumentChatPage() {
                     setError(reason instanceof Error ? reason.message : "That chat could not be deleted");
                   });
               }}
+              fileName={selected.filename}
+              onDeleteFile={
+                selected.owner_id === loadSession()?.user.id
+                  ? (id) => {
+                      void deleteConversation(id, true)
+                        .then(() => refresh())
+                        .then(() => {
+                          setConversationId(null);
+                          setHistory([]);
+                          setError(null);
+                        })
+                        .catch((reason: unknown) => {
+                          setError(
+                            reason instanceof Error
+                              ? reason.message
+                              : "That chat and file could not be deleted",
+                          );
+                        });
+                    }
+                  : undefined
+              }
             />
             <Space direction="vertical" size="middle" style={{ flex: 1, minWidth: 0 }}>
               <ChatHistory messages={history} />
@@ -217,7 +246,13 @@ export function DocumentChatPage() {
                 placeholder={meta?.placeholder}
                 onChange={(event) => setPrompt(event.target.value)}
               />
-              <Button type="primary" onClick={() => void onAsk()} loading={asking} disabled={!prompt.trim()}>
+              <Button
+                type="primary"
+                icon={<SendOutlined />}
+                onClick={() => void onAsk()}
+                loading={asking}
+                disabled={!prompt.trim()}
+              >
                 Ask
               </Button>
             </Space>

@@ -17,6 +17,7 @@ export interface KnowledgeConversation {
   space_label: string;
   document_id: string | null;
   filename: string | null;
+  file_owned: boolean;
   intent_label: string | null;
   updated_at: string;
 }

@@ -1,3 +1,4 @@
+import { LoginOutlined } from "@ant-design/icons";
 import { Button, Card, Form, Input, Typography } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -43,7 +44,7 @@ export function LoginPage() {
               {error}
             </Typography.Paragraph>
           ) : null}
-          <Button type="primary" htmlType="submit" block loading={submitting}>
+          <Button type="primary" htmlType="submit" icon={<LoginOutlined />} block loading={submitting}>
             Log in
           </Button>
         </Form>
