@@ -7,6 +7,15 @@ from dataclasses import dataclass
 
 from PIL import Image
 
+from app.documents.langchain_load import (
+    LoaderFailed,
+    load_csv_rows,
+    load_docx,
+    load_pdf_pages,
+    load_text,
+    temporary_upload,
+)
+
 
 class UnsupportedFile(Exception):
     """The extension is not one this extractor knows."""
@@ -24,6 +33,8 @@ class ExtractedDocument:
 
 _TEXT = {".txt", ".md", ".csv"}
 _IMAGES = {".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".bmp"}
+_OCR_PAGE_BUDGET = 12
+_TABLE_PAGE_LIMIT = 40
 
 
 def extract_upload(filename: str, data: bytes) -> ExtractedDocument:
@@ -94,31 +105,74 @@ def _suffix(filename: str) -> str:
 
 
 def _extract_text(data: bytes, suffix: str) -> ExtractedDocument:
+    try:
+        with temporary_upload(data, suffix) as path:
+            if suffix == ".csv":
+                load_csv_rows(path)
+            else:
+                loaded = load_text(path)
+    except LoaderFailed as exc:
+        raise UnsupportedFile(str(exc)) from exc
     decoded = data.decode("utf-8", errors="replace")
     if suffix != ".csv":
-        return ExtractedDocument(decoded, "text")
+        return ExtractedDocument(loaded or decoded, "textloader")
     rows = list(csv.reader(io.StringIO(decoded)))
     rendered = markdown_table([list(row) for row in rows])
-    return ExtractedDocument(rendered or decoded, "csv")
+    return ExtractedDocument(rendered or decoded, "csvloader")
 
 
 def _extract_pdf(data: bytes) -> ExtractedDocument:
-    import pdfplumber
-
+    try:
+        with temporary_upload(data, ".pdf") as path:
+            pages, error = load_pdf_pages(path)
+    except LoaderFailed as exc:
+        raise UnsupportedFile(str(exc)) from exc
+    tables = _pdf_tables(data) if len(pages) <= _TABLE_PAGE_LIMIT else []
     parts: list[str] = []
-    with pdfplumber.open(io.BytesIO(data)) as pdf:
-        for index, page in enumerate(pdf.pages, start=1):
-            page_text = page.extract_text() or ""
-            tables = [markdown_table(table) for table in page.extract_tables() or []]
-            tables = [table for table in tables if table]
-            if tables:
-                page_text = f"{page_text}\n\n" + "\n\n".join(tables)
-            if len(page_text.strip()) < 40:
+    ocr_used = 0
+    skipped_scan = False
+    for index, page_text in enumerate(pages, start=1):
+        page_tables = tables[index - 1] if index - 1 < len(tables) else []
+        if page_tables:
+            page_text = f"{page_text}\n\n" + "\n\n".join(page_tables)
+        if len(page_text.strip()) < 40:
+            if ocr_used < _OCR_PAGE_BUDGET:
                 ocr_text = _ocr_pdf_page(data, index - 1)
+                ocr_used += 1
                 if ocr_text:
                     page_text = f"{page_text}\n\n{ocr_text}".strip()
-            parts.append(f"## Page {index}\n{page_text}".strip())
-    return ExtractedDocument("\n\n".join(parts), "pdfplumber")
+            else:
+                skipped_scan = True
+        parts.append(f"## Page {index}\n{page_text}".strip())
+    if error:
+        parts.append(error)
+    if skipped_scan:
+        parts.append(
+            "Later image-only pages were not scanned. The text pages above were read."
+        )
+    return ExtractedDocument("\n\n".join(parts), "pypdf")
+
+
+def _pdf_tables(data: bytes) -> list[list[str]]:
+    """Add markdown tables when pdfplumber can see them. A bad page is skipped."""
+    import pdfplumber
+
+    found: list[list[str]] = []
+    try:
+        pdf = pdfplumber.open(io.BytesIO(data))
+    except Exception:
+        return []
+    try:
+        for page in pdf.pages:
+            try:
+                raw_tables = page.extract_tables() or []
+            except Exception:
+                raw_tables = []
+            rendered = [markdown_table(table) for table in raw_tables]
+            found.append([table for table in rendered if table])
+    finally:
+        pdf.close()
+    return found
 
 
 def _ocr_pdf_page(data: bytes, page_index: int) -> str:
@@ -135,16 +189,29 @@ def _ocr_pdf_page(data: bytes, page_index: int) -> str:
 
 
 def _extract_docx(data: bytes) -> ExtractedDocument:
+    try:
+        with temporary_upload(data, ".docx") as path:
+            prose = load_docx(path)
+    except LoaderFailed as exc:
+        raise UnsupportedFile(str(exc)) from exc
+    parts = [prose] if prose.strip() else []
+    for table in _docx_tables(data):
+        if table not in prose:
+            parts.append(table)
+    return ExtractedDocument("\n\n".join(parts), "docx2txt")
+
+
+def _docx_tables(data: bytes) -> list[str]:
     from docx import Document
 
     document = Document(io.BytesIO(data))
-    parts = [paragraph.text.strip() for paragraph in document.paragraphs if paragraph.text.strip()]
+    tables: list[str] = []
     for table in document.tables:
         rows = [[cell.text for cell in row.cells] for row in table.rows]
         rendered = markdown_table(rows)
         if rendered:
-            parts.append(rendered)
-    return ExtractedDocument("\n\n".join(parts), "python-docx")
+            tables.append(rendered)
+    return tables
 
 
 def _extract_xlsx(data: bytes) -> ExtractedDocument:

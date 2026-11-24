@@ -4,12 +4,14 @@ import math
 import re
 import zlib
 
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 _TOKEN = re.compile(r"[a-z0-9]+")
 _DIMENSIONS = 256
 
 
 def chunk_text(text: str, size: int = 900, table_limit: int = 4000) -> list[str]:
-    """Pack prose into chunks and keep a markdown table together with its header."""
+    """Split prose with LangChain and keep a markdown table together with its header."""
     paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
     if not paragraphs:
         compact = text.strip()
@@ -23,34 +25,38 @@ def chunk_text(text: str, size: int = 900, table_limit: int = 4000) -> list[str]
                 current = ""
             chunks.extend(_table_chunks(paragraph, table_limit))
             continue
-        for piece in _split_prose(paragraph, size):
-            if current and len(current) + len(piece) + 2 > size:
+        if len(paragraph) > size:
+            if current:
                 chunks.append(current)
-                current = piece
-            else:
-                current = f"{current}\n\n{piece}".strip()
+                current = ""
+            chunks.extend(_split_with_langchain(paragraph, size))
+            continue
+        if current and len(current) + len(paragraph) + 2 > size:
+            chunks.append(current)
+            current = paragraph
+        else:
+            current = f"{current}\n\n{paragraph}".strip()
     if current:
         chunks.append(current)
     return chunks
 
 
+def _split_with_langchain(paragraph: str, size: int) -> list[str]:
+    """Break one long passage. Overlap keeps a large PDF from cutting a sentence in half."""
+    overlap = min(120, max(size // 5, 0))
+    if overlap >= size:
+        overlap = 0
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=size,
+        chunk_overlap=overlap,
+        separators=["\n\n", "\n", ". ", " ", ""],
+        length_function=len,
+    )
+    return [piece.strip() for piece in splitter.split_text(paragraph) if piece.strip()]
+
+
 def _is_table_block(text: str) -> bool:
     return "| --- |" in text or "|---|" in text.replace(" ", "")
-
-
-def _split_prose(paragraph: str, size: int) -> list[str]:
-    if len(paragraph) <= size:
-        return [paragraph]
-    overlap = min(120, max(size // 5, 1))
-    pieces: list[str] = []
-    start = 0
-    while start < len(paragraph):
-        end = min(len(paragraph), start + size)
-        pieces.append(paragraph[start:end])
-        if end == len(paragraph):
-            break
-        start = max(end - overlap, start + 1)
-    return pieces
 
 
 def _table_chunks(block: str, limit: int) -> list[str]:

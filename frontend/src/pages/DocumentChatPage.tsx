@@ -177,7 +177,7 @@ export function DocumentChatPage() {
                 {item.shared ? <Tag>Shared with you</Tag> : <Tag>Yours</Tag>}
               </Space>
               <Typography.Text type="secondary">
-                {item.owner_name} · {item.excerpt}
+                {item.owner_name} · {item.extractor} · {item.excerpt}
               </Typography.Text>
             </Space>
           </List.Item>
