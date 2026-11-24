@@ -2,7 +2,12 @@
 
 import structlog
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.core.config import get_settings
 
@@ -15,6 +20,7 @@ def create_engine() -> AsyncEngine:
 
 
 engine = create_engine()
+SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def check_database() -> bool:

@@ -52,32 +52,55 @@ def _gateway_api_key(settings: Settings, api_base: str) -> str:
     return ""
 
 
-def scrub_messages(messages: list[dict[str, str]]) -> list[dict[str, str]]:
+def scrub_messages(messages: list[dict[str, Any]]) -> list[dict[str, str]]:
     cleaned: list[dict[str, str]] = []
     for message in messages:
         cleaned.append(
             {
-                "role": message.get("role", "user"),
-                "content": scrub(message.get("content", "")) or "",
+                "role": str(message.get("role", "user")),
+                "content": _scrub_content(message.get("content", "")),
             }
         )
     return cleaned
 
 
+def _scrub_content(content: Any) -> str:
+    if isinstance(content, str):
+        return scrub(content) or ""
+    if not isinstance(content, list):
+        return scrub(str(content)) or ""
+    texts: list[str] = []
+    images = 0
+    for part in content:
+        if not isinstance(part, dict):
+            continue
+        if part.get("type") == "text":
+            texts.append(scrub(str(part.get("text", ""))) or "")
+        elif part.get("type") == "image_url":
+            images += 1
+    text = "\n".join(item for item in texts if item)
+    if images:
+        note = f"[{images} image attached]"
+        text = f"{text}\n{note}" if text else note
+    return text
+
+
 async def call_model(
     *,
     model: str,
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     api_key: str,
     api_base: str,
     timeout: float,
     num_retries: int,
+    temperature: float | None = None,
 ) -> Any:
     """The only function that imports LiteLLM."""
     import litellm
     from litellm import acompletion
 
     litellm.telemetry = False
+    litellm.drop_params = True
     kwargs: dict[str, Any] = {
         "model": model,
         "messages": messages,
@@ -88,6 +111,16 @@ async def call_model(
         kwargs["api_key"] = api_key
     if api_base:
         kwargs["api_base"] = api_base
+    if temperature is not None:
+        kwargs["temperature"] = temperature
+    # Qwen thinking adds a long hidden pass. These chat routes answer from the documents.
+    proxy_ollama = _is_litellm_proxy(api_base) and model in {
+        "openai/smart-ollama",
+        "openai/chat-default",
+        "openai/local-ollama",
+    }
+    if model.startswith("ollama/") or ":11434" in api_base or proxy_ollama:
+        kwargs["reasoning_effort"] = "none"
     return await acompletion(**kwargs)
 
 
@@ -101,10 +134,11 @@ def _usage_count(usage: Any, name: str) -> int | None:
 
 
 async def complete(
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     *,
     source: str,
     settings: Settings | None = None,
+    temperature: float | None = None,
 ) -> LLMTrace:
     """Call the configured alias and store the request, response, usage, and error."""
     active = settings or get_settings()
@@ -146,13 +180,15 @@ async def complete(
 
     try:
         provider_key = _gateway_api_key(active, local_base)
+        text_only = all(isinstance(message.get("content"), str) for message in messages)
         response = await call_model(
             model=active.chat_model,
-            messages=stored_messages,
+            messages=stored_messages if text_only else messages,
             api_key=provider_key,
             api_base=local_base,
             timeout=active.llm_timeout_seconds,
             num_retries=active.llm_max_retries,
+            temperature=temperature,
         )
     except Exception as exc:
         base.error_type = type(exc).__name__

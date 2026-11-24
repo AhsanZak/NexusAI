@@ -1,9 +1,11 @@
 """Persistence for model-call traces."""
 
 from pathlib import Path
+from typing import cast
 
 import structlog
-from sqlalchemy import func, select
+from sqlalchemy import Table, func, select
+from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -47,8 +49,11 @@ def _sessions() -> async_sessionmaker[AsyncSession]:
 
 
 async def init_trace_store() -> None:
+    def create_trace_table(connection: Connection) -> None:
+        Base.metadata.create_all(connection, tables=[cast(Table, LLMTrace.__table__)])
+
     async with get_trace_engine().begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
+        await connection.run_sync(create_trace_table)
     log.info("trace_store_ready", dialect=trace_dialect())
 
 

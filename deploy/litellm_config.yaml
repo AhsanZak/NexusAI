@@ -1,19 +1,42 @@
 # LiteLLM proxy model list for local development.
 # The proxy is the only process that maps chat-default to a real model.
-# api_base is the host address as seen from the proxy container, which is the
-# Docker bridge gateway on this machine. Ollama must listen beyond 127.0.0.1
-# so that address can reach it.
+# api_base is the GPU Ollama server. qwen3.8:27b answers the chat.
+# qwen3:8b on the same server classifies intent and is called directly.
+# bge-m3 on the same server embeds the passages.
 
 model_list:
   - model_name: chat-default
     litellm_params:
-      model: ollama/qwen2.5:3b
-      api_base: http://172.19.0.1:11434
+      model: ollama/qwen3.8:27b
+      num_ctx: 8192
+      api_base: http://192.168.100.11:11434
       drop_params: true
+  - model_name: smart-ollama
+    litellm_params:
+      model: ollama/qwen3.8:27b
+      num_ctx: 8192
+      api_base: http://192.168.100.11:11434
+      drop_params: true
+  - model_name: local-ollama
+    litellm_params:
+      model: ollama/qwen3.8:27b
+      num_ctx: 8192
+      api_base: http://192.168.100.11:11434
+      drop_params: true
+  - model_name: openai-fallback
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
 
 litellm_settings:
   telemetry: false
   drop_params: true
+
+router_settings:
+  fallbacks:
+    - chat-default: ["openai-fallback"]
+    - smart-ollama: ["openai-fallback"]
+    - local-ollama: ["openai-fallback"]
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

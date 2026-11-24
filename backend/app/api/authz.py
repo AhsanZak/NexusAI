@@ -2,28 +2,17 @@
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.authz.client import OpenFGAClient, OpenFGAError
-from app.core.config import get_settings
+from app.authz.client import OpenFGAError, get_openfga_client
 from app.schemas.authz import AccessDecisionResponse, AuthzDemoResponse
 from app.services.authorization import collect_decisions
 
 router = APIRouter(prefix="/authz", tags=["authz"])
 
-_client: OpenFGAClient | None = None
-
-
-def _client_for_request() -> OpenFGAClient:
-    global _client
-    settings = get_settings()
-    if _client is None or _client.api_url != settings.openfga_api_url.rstrip("/"):
-        _client = OpenFGAClient(settings.openfga_api_url, settings.openfga_store_name)
-    return _client
-
 
 @router.get("/demo", response_model=AuthzDemoResponse)
 async def authorization_demo() -> AuthzDemoResponse:
     """Run the two-user example against the configured OpenFGA server."""
-    client = _client_for_request()
+    client = get_openfga_client()
     try:
         await client.prepare()
         decisions = await collect_decisions(client)

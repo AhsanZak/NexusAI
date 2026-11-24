@@ -5,6 +5,7 @@ from typing import Any, Protocol
 import httpx
 
 from app.authz.demo import AUTHORIZATION_MODEL, TUPLES
+from app.core.config import get_settings
 
 
 class OpenFGAError(Exception):
@@ -66,15 +67,44 @@ class OpenFGAClient:
         if not isinstance(model_id, str) or not model_id:
             raise OpenFGAError("OpenFGA did not return an authorization model id")
         self.model_id = model_id
+        await self.write_tuples(list(TUPLES))
+
+    async def write_tuples(self, tuples: list[tuple[str, str, str]]) -> None:
+        """Create relationship tuples. Existing copies of the same tuple stay."""
+        if not tuples:
+            return
+        if not self.store_id or not self.model_id:
+            await self.prepare()
         tuple_keys = [
             {"user": user, "relation": relation, "object": object_id}
-            for user, relation, object_id in TUPLES
+            for user, relation, object_id in tuples
         ]
         await self._request(
             "POST",
             f"/stores/{self.store_id}/write",
             {"writes": {"tuple_keys": tuple_keys, "on_duplicate": "ignore"}},
         )
+
+    async def delete_tuples(self, tuples: list[tuple[str, str, str]]) -> None:
+        """Remove relationship tuples. A missing tuple is already revoked."""
+        if not tuples:
+            return
+        if not self.store_id or not self.model_id:
+            await self.prepare()
+        tuple_keys = [
+            {"user": user, "relation": relation, "object": object_id}
+            for user, relation, object_id in tuples
+        ]
+        try:
+            await self._request(
+                "POST",
+                f"/stores/{self.store_id}/write",
+                {"deletes": {"tuple_keys": tuple_keys}},
+            )
+        except OpenFGAError as exc:
+            if "does not exist" in str(exc):
+                return
+            raise
 
     async def _find_or_create_store(self) -> str:
         listed = await self._request("GET", "/stores")
@@ -115,3 +145,20 @@ class OpenFGAClient:
         if not isinstance(body, dict):
             raise OpenFGAError("OpenFGA returned an unexpected payload")
         return body
+
+
+_cached: OpenFGAClient | None = None
+
+
+def get_openfga_client() -> OpenFGAClient:
+    """Reuse one client so the store and model are written once per process."""
+    global _cached
+    settings = get_settings()
+    api_url = settings.openfga_api_url.rstrip("/")
+    if (
+        _cached is None
+        or _cached.api_url != api_url
+        or _cached.store_name != settings.openfga_store_name
+    ):
+        _cached = OpenFGAClient(settings.openfga_api_url, settings.openfga_store_name)
+    return _cached

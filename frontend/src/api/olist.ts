@@ -1,3 +1,5 @@
+import { authHeaders } from "../auth/session";
+
 export interface OlistCounts {
   orders: number;
   customers: number;
@@ -65,9 +67,11 @@ export interface OlistDashboard {
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? "";
 
 export async function loadOlistDashboard(): Promise<OlistDashboard> {
-  const response = await fetch(`${apiBase}/api/v1/olist/dashboard`);
+  const response = await fetch(`${apiBase}/api/v1/olist/dashboard`, { headers: authHeaders() });
   if (!response.ok) {
-    throw new Error(`Olist dashboard returned ${response.status}`);
+    const body = (await response.json().catch(() => null)) as { detail?: string } | null;
+    const detail = typeof body?.detail === "string" ? body.detail : "";
+    throw new Error(detail || `Olist dashboard returned ${response.status}`);
   }
   return (await response.json()) as OlistDashboard;
 }

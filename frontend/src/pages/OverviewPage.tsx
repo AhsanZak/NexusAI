@@ -2,6 +2,7 @@ import { Card, Col, Row, Tag, Typography } from "antd";
 import { useEffect, useState } from "react";
 
 import { loadServiceChecks, type ServiceCheck } from "../api/health";
+import { KnowledgeDashboard } from "../components/KnowledgeDashboard";
 import { WorldBankPanel } from "./WorldBankPanel";
 
 const tagColor: Record<ServiceCheck["state"], string> = {
@@ -34,6 +35,7 @@ export function OverviewPage() {
 
   return (
     <div>
+      <KnowledgeDashboard />
       <Typography.Title level={3}>Platform overview</Typography.Title>
       <Typography.Paragraph>
         Public World Bank indicators are charted here. Olist sales, reviews, and delivery from the

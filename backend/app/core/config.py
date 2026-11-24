@@ -35,8 +35,16 @@ class Settings(BaseSettings):
         repr=False,
         validation_alias=AliasChoices("OPENAI_API_KEY", "NEXUS_OPENAI_API_KEY"),
     )
+    jwt_secret: str = Field(default="local-nexusai-change-me", repr=False)
+    jwt_ttl_hours: int = 12
     openfga_api_url: str = "http://127.0.0.1:8090"
     openfga_store_name: str = "nexusai"
+    ollama_base_url: str = "http://192.168.100.11:11434"
+    local_ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_chat_model: str = "qwen3.8:27b"
+    ollama_intent_model: str = "qwen3:8b"
+    ollama_embed_model: str = "bge-m3:latest"
+    openai_model: str = "gpt-4o-mini"
     litellm_master_key: str = Field(
         default="",
         repr=False,

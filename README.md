@@ -17,7 +17,7 @@ The public repository is [AhsanZak/NexusAI](https://github.com/AhsanZak/NexusAI)
 export NEXUS_DATABASE_URL=postgresql+asyncpg://nexus:nexus@127.0.0.1:5433/nexusai
 ```
 
-The Admin page asks OpenFGA whether two demo users may see three documents. They share viewer access to the World Bank indicators. The sales analyst alone can read the Olist warehouse text, and the finance reviewer alone can read the finance notes. Login, document ingestion, RAG, NL2SQL, and agents are not implemented yet. Chat calls go through the LiteLLM gateway and are visible on the model status page. See [PROJECT_STATUS.md](PROJECT_STATUS.md), [docs/OPENFGA_MODEL.md](docs/OPENFGA_MODEL.md), and [docs/LLM_GATEWAY.md](docs/LLM_GATEWAY.md).
+Sign in at `/login`. Local accounts are created by `python -m app.seed` in `backend/` after migration `0005_users`. The super admin is `admin@nexusai.local` and can add more email accounts from Admin. The Assistant page asks as Amina Rahman or Luis Ortega. OpenFGA runs first, and only an allowed document is placed in the model prompt. They share the World Bank indicators. Amina alone can use the Olist warehouse text, and Luis alone can use the finance notes. Login, document ingestion, NL2SQL, and agents are not implemented yet. See [PROJECT_STATUS.md](PROJECT_STATUS.md), [docs/OPENFGA_MODEL.md](docs/OPENFGA_MODEL.md), and [docs/LLM_GATEWAY.md](docs/LLM_GATEWAY.md).
 
 ## Run locally
 

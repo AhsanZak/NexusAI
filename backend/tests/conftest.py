@@ -12,6 +12,7 @@ os.environ["NEXUS_TRACE_DATABASE_URL"] = f"sqlite+aiosqlite:///{_TRACE_DB}"
 # A developer .env may contain a real key and a local model. Tests stay on the default alias.
 os.environ["OPENAI_API_KEY"] = ""
 os.environ["LITELLM_MASTER_KEY"] = ""
+os.environ["NEXUS_CHAT_ALIAS"] = "chat-default"
 os.environ["NEXUS_CHAT_MODEL"] = "openai/gpt-4o-mini"
 os.environ["NEXUS_CHAT_API_BASE"] = ""
 

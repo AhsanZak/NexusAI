@@ -32,10 +32,12 @@ Amina Rahman is the sales analyst. Luis Ortega is the finance reviewer. Both can
 
 ## Local server
 
-The API reads `NEXUS_OPENFGA_API_URL`, which defaults to `http://127.0.0.1:8090`. Docker Compose runs OpenFGA 1.23 with an in-memory datastore and publishes that port. On a machine without Docker, the same binary is:
+The API reads `NEXUS_OPENFGA_API_URL`, which defaults to `http://127.0.0.1:8090`. Docker Compose runs OpenFGA 1.23 with an in-memory datastore and publishes that same port. Host port 8080 is the dashboard, so OpenFGA does not listen there. The Playground is at http://localhost:3000/playground and calls `http://127.0.0.1:8090`. CORS allows `http://localhost:3000`, `http://127.0.0.1:3000`, and `https://play.fga.dev`.
+
+On a machine without Docker, the same binary is:
 
 ```bash
-openfga run --datastore-engine memory --http-addr 0.0.0.0:8090
+openfga run --datastore-engine memory --http-addr 0.0.0.0:8090 --playground-enabled
 ```
 
 The memory datastore is empty after a restart. The next call to `GET /api/v1/authz/demo` writes the store, model, and tuples again.
