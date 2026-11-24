@@ -4,6 +4,7 @@ import csv
 import io
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 
 from PIL import Image
 
@@ -11,6 +12,8 @@ from app.documents.langchain_load import (
     LoaderFailed,
     load_csv_rows,
     load_docx,
+    load_html,
+    load_json,
     load_pdf_pages,
     load_text,
     temporary_upload,
@@ -32,7 +35,9 @@ class ExtractedDocument:
 
 
 _TEXT = {".txt", ".md", ".csv"}
-_IMAGES = {".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".bmp"}
+_HTML = {".html", ".htm"}
+_JSON = {".json"}
+_IMAGES = {".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".bmp", ".gif"}
 _OCR_PAGE_BUDGET = 12
 _TABLE_PAGE_LIMIT = 40
 
@@ -40,7 +45,7 @@ _TABLE_PAGE_LIMIT = 40
 def extract_upload(filename: str, data: bytes) -> ExtractedDocument:
     """Return the document text. Tables are markdown so the rows stay aligned."""
     suffix = _suffix(filename)
-    if suffix in _TEXT:
+    if suffix in _TEXT or suffix in _HTML or suffix in _JSON:
         extracted = _extract_text(data, suffix)
     elif suffix == ".pdf":
         extracted = _extract_pdf(data)
@@ -49,10 +54,10 @@ def extract_upload(filename: str, data: bytes) -> ExtractedDocument:
     elif suffix == ".xlsx":
         extracted = _extract_xlsx(data)
     elif suffix in _IMAGES:
-        extracted = ExtractedDocument(ocr_image(Image.open(io.BytesIO(data))), "rapidocr")
+        extracted = _extract_image(filename, data)
     else:
         raise UnsupportedFile(
-            "Upload a text, CSV, PDF, Word (.docx), Excel (.xlsx), or image file"
+            "Upload a PDF, spreadsheet, image, text, Word, HTML, or JSON file."
         )
     if not extracted.text.strip():
         raise EmptyDocument("No text or table cells could be read from this file")
@@ -109,16 +114,39 @@ def _extract_text(data: bytes, suffix: str) -> ExtractedDocument:
         with temporary_upload(data, suffix) as path:
             if suffix == ".csv":
                 load_csv_rows(path)
+                kind = "csvloader"
+            elif suffix in _HTML:
+                loaded = load_html(path)
+                kind = "bshtml"
+            elif suffix in _JSON:
+                loaded = load_json(path)
+                kind = "json"
             else:
                 loaded = load_text(path)
+                kind = "textloader"
     except LoaderFailed as exc:
         raise UnsupportedFile(str(exc)) from exc
-    decoded = data.decode("utf-8", errors="replace")
-    if suffix != ".csv":
-        return ExtractedDocument(loaded or decoded, "textloader")
-    rows = list(csv.reader(io.StringIO(decoded)))
-    rendered = markdown_table([list(row) for row in rows])
-    return ExtractedDocument(rendered or decoded, "csvloader")
+    if suffix == ".csv":
+        decoded = data.decode("utf-8", errors="replace")
+        rows = list(csv.reader(io.StringIO(decoded)))
+        rendered = markdown_table([list(row) for row in rows])
+        return ExtractedDocument(rendered or decoded, kind)
+    return ExtractedDocument(loaded, kind)
+
+
+def _extract_image(filename: str, data: bytes) -> ExtractedDocument:
+    """Read words from a picture. A picture with no words is still kept."""
+    try:
+        image = Image.open(io.BytesIO(data))
+        image.load()
+    except Exception as exc:
+        raise UnsupportedFile(
+            "This image could not be opened. Use PNG, JPEG, WEBP, TIFF, BMP, or GIF."
+        ) from exc
+    text = ocr_image(image)
+    if not text.strip():
+        text = f"Image file {Path(filename).name}. No words were read from the picture."
+    return ExtractedDocument(text, "rapidocr")
 
 
 def _extract_pdf(data: bytes) -> ExtractedDocument:

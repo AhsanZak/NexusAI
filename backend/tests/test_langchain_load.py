@@ -3,10 +3,12 @@
 import io
 
 import pytest
+from PIL import Image
 from pypdf import PdfWriter
 
 from app.documents.extract import EmptyDocument, UnsupportedFile, extract_upload
 from app.documents.vectors import chunk_text
+from app.services.library import _extract_for_space
 
 
 def test_a_multipage_pdf_is_read_with_pypdf_and_split() -> None:
@@ -56,6 +58,48 @@ def test_a_csv_still_becomes_a_table_after_the_loader_reads_it() -> None:
 
     assert extracted.extractor == "csvloader"
     assert "| North | 42 |" in extracted.text
+
+
+def test_text_word_html_and_json_are_read() -> None:
+    text = extract_upload("note.txt", b"Hello warehouse")
+    markdown = extract_upload("note.md", b"# Title\n\nHello warehouse")
+    html = extract_upload(
+        "notes.html",
+        b"<html><body><p>Quarterly note ZX-44</p></body></html>",
+    )
+    payload = extract_upload("codes.json", b'{"site": "ZX-44"}')
+
+    assert text.extractor == "textloader"
+    assert "Hello warehouse" in text.text
+    assert markdown.extractor == "textloader"
+    assert "Hello warehouse" in markdown.text
+    assert html.extractor == "bshtml"
+    assert "ZX-44" in html.text
+    assert payload.extractor == "json"
+    assert "ZX-44" in payload.text
+    with pytest.raises(UnsupportedFile):
+        extract_upload("bad.json", b"{")
+    with pytest.raises(UnsupportedFile):
+        extract_upload("broken.docx", b"this is not a word file")
+
+
+def test_a_picture_is_kept_when_it_has_no_words() -> None:
+    buffer = io.BytesIO()
+    Image.new("RGB", (16, 16), "white").save(buffer, format="PNG")
+    extracted = extract_upload("blank.png", buffer.getvalue())
+
+    assert extracted.extractor == "rapidocr"
+    assert "No words were read" in extracted.text
+    with pytest.raises(UnsupportedFile, match="image"):
+        extract_upload("bad.png", b"not an image")
+
+
+def test_a_video_is_stored_without_reading_frames() -> None:
+    extracted = _extract_for_space("video", "clip.mp4", b"not-really-video")
+
+    assert extracted.extractor == "stored"
+    assert "clip.mp4" in extracted.text
+    assert "frames were not read" in extracted.text
 
 
 def test_a_long_paragraph_is_split_by_the_langchain_splitter() -> None:

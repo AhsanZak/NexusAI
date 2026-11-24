@@ -44,6 +44,7 @@ _IMAGE_TYPES = {
     ".tif": "image/tiff",
     ".tiff": "image/tiff",
     ".bmp": "image/bmp",
+    ".gif": "image/gif",
 }
 
 

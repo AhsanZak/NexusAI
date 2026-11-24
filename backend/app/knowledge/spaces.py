@@ -5,7 +5,7 @@ from pathlib import Path
 
 from app.documents.extract import UnsupportedFile
 
-_IMAGES = (".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".bmp")
+_IMAGES = (".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".bmp", ".gif")
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ SPACES: tuple[KnowledgeSpace, ...] = (
     KnowledgeSpace(
         "image",
         "Images",
-        "Read an image and ask about what is in it.",
+        "Read a picture and ask about the words in it.",
         "What is in this image?",
         _IMAGES,
     ),
@@ -56,9 +56,9 @@ SPACES: tuple[KnowledgeSpace, ...] = (
     KnowledgeSpace(
         "document",
         "Other documents",
-        "Chat with a text or Word file.",
+        "Chat with a text, Markdown, Word, HTML, or JSON file.",
         "What does this document say?",
-        (".txt", ".md", ".docx"),
+        (".txt", ".md", ".docx", ".html", ".htm", ".json"),
     ),
 )
 
@@ -89,7 +89,7 @@ def infer_space(filename: str) -> str:
         if suffix in space.extensions:
             return space.id
     raise UnsupportedFile(
-        "Upload a PDF, Excel workbook, CSV, image, video, text file, or Word document."
+        "Upload a PDF, spreadsheet, image, video, text, Word, HTML, or JSON file."
     )
 
 

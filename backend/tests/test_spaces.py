@@ -13,6 +13,9 @@ def test_a_file_name_picks_its_space() -> None:
     assert infer_space("chart.png") == "image"
     assert infer_space("clip.mp4") == "video"
     assert infer_space("memo.docx") == "document"
+    assert infer_space("page.html") == "document"
+    assert infer_space("codes.json") == "document"
+    assert infer_space("chart.gif") == "image"
 
 
 def test_a_graph_is_chosen_and_not_guessed_from_the_picture() -> None:

@@ -14,6 +14,7 @@ warnings.filterwarnings(
     category=DeprecationWarning,
 )
 from langchain_community.document_loaders import (  # noqa: E402
+    BSHTMLLoader,
     CSVLoader,
     Docx2txtLoader,
     PyPDFLoader,
@@ -41,7 +42,7 @@ def temporary_upload(data: bytes, suffix: str) -> Iterator[str]:
 def load_pdf_pages(path: str) -> tuple[list[str], str | None]:
     """Read each PDF page with PyPDFLoader. A bad later page does not drop earlier ones."""
     loader = PyPDFLoader(path, mode="page", extraction_mode="plain")
-    pages, error = _collect(loader.lazy_load())
+    pages, error = _open(loader)
     if not pages and error:
         raise LoaderFailed(error)
     return [page.page_content or "" for page in pages], error
@@ -51,9 +52,27 @@ def load_text(path: str) -> str:
     return _joined(TextLoader(path, encoding="utf-8"))
 
 
+def load_html(path: str) -> str:
+    """Read an HTML file with Beautiful Soup. The parser is the Python standard one."""
+    loader = BSHTMLLoader(path, open_encoding="utf-8", bs_kwargs={"features": "html.parser"})
+    return _joined(loader)
+
+
+def load_json(path: str) -> str:
+    """Read JSON and keep it as text. A broken file is refused before it is stored."""
+    import json
+
+    raw = Path(path).read_text(encoding="utf-8")
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise LoaderFailed(explain_load_error(exc)) from exc
+    return json.dumps(parsed, indent=2, ensure_ascii=False)
+
+
 def load_csv_rows(path: str) -> list[Document]:
     """Let CSVLoader parse the file. Callers turn the rows into a table."""
-    pages, error = _collect(CSVLoader(path, encoding="utf-8").lazy_load())
+    pages, error = _open(CSVLoader(path, encoding="utf-8"))
     if error and not pages:
         raise LoaderFailed(error)
     return pages
@@ -79,10 +98,19 @@ def explain_load_error(exc: BaseException) -> str:
 
 
 def _joined(loader: Any) -> str:
-    pages, error = _collect(loader.lazy_load())
+    pages, error = _open(loader)
     if error and not pages:
         raise LoaderFailed(error)
     return "\n\n".join(page.page_content.strip() for page in pages if page.page_content.strip())
+
+
+def _open(loader: Any) -> tuple[list[Document], str | None]:
+    """Start the loader. Some loaders raise before the first page is returned."""
+    try:
+        stream = loader.lazy_load()
+    except Exception as exc:
+        return [], explain_load_error(exc)
+    return _collect(stream)
 
 
 def _collect(stream: Iterator[Document]) -> tuple[list[Document], str | None]:
