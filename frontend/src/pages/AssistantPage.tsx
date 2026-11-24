@@ -12,6 +12,7 @@ import {
   type ChatTurn,
 } from "../api/chat";
 import { useChatModel } from "../chat/models";
+import { AnswerText } from "../components/AnswerText";
 import { ChatHistory } from "../components/ChatHistory";
 import { ConversationSidebar } from "../components/ConversationSidebar";
 
@@ -141,9 +142,13 @@ export function AssistantPage() {
       {result ? (
         <Card title={`Answer for ${result.display_name}`} style={{ marginTop: 16 }}>
           <Tag style={{ marginBottom: 12 }}>{result.intent_label}</Tag>
-          <Typography.Paragraph>
-            {result.status === "success" ? result.answer : result.error_message || "The model call failed."}
-          </Typography.Paragraph>
+          {result.status === "success" && result.answer ? (
+            <AnswerText text={result.answer} />
+          ) : (
+            <Typography.Paragraph>
+              {result.error_message || "The model call failed."}
+            </Typography.Paragraph>
+          )}
           <Space direction="vertical">
             {result.documents.map((item) => (
               <div key={item.object_id}>
