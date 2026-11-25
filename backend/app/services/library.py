@@ -8,7 +8,7 @@ from typing import Any
 
 from app.ai.gateway import LLMCallError, complete
 from app.authz.client import OpenFGAClient
-from app.authz.demo import member_subject
+from app.authz.demo import DOCUMENT_RELATIONS, InvalidGrant, member_subject
 from app.core.config import Settings, get_settings
 from app.documents.extract import ExtractedDocument, extract_upload
 from app.documents.ollama_embed import EmbeddingError, embed_texts
@@ -30,7 +30,7 @@ from app.repositories.uploads import (
 )
 from app.repositories.users import get_by_id
 from app.schemas.library import DocumentAccess, LibraryAskResponse, LibraryDocument, LibraryExcerpt
-from app.services.access import create_permission, delete_permission
+from app.services.access import create_permission, delete_permission, update_permission
 from app.services.chat_context import append_prior
 
 _MAX_BYTES = 20 * 1024 * 1024
@@ -129,12 +129,14 @@ async def documents_for(user: User, space: str | None = None) -> list[LibraryDoc
     documents = await list_documents()
     grants = await list_grants()
     users = await list_users_by_id()
+    client = await _checker_for(user, documents, grants, space)
+    if client is not None:
+        grants = await _synced_grants(client)
     visible: list[LibraryDocument] = []
     for document in documents:
         if space is not None and document.space != space:
             continue
-        granted = _granted_users(grants, document.id)
-        if not can_view(user, document, granted):
+        if not await _may_read(user, document, grants, client):
             continue
         owner = users.get(document.owner_id)
         shared = user.id != document.owner_id and user.role != "super_admin"
@@ -165,6 +167,7 @@ async def access_list(document_id: uuid.UUID) -> list[DocumentAccess]:
                 display_name=owner.display_name,
                 email=owner.email,
                 owner=True,
+                relation="viewer",
             )
         )
     for grant in await list_grants():
@@ -180,6 +183,7 @@ async def access_list(document_id: uuid.UUID) -> list[DocumentAccess]:
                 display_name=member.display_name,
                 email=member.email,
                 owner=False,
+                relation=grant.relation,
             )
         )
     return rows
@@ -189,14 +193,31 @@ async def share_document(
     document_id: uuid.UUID,
     member_id: uuid.UUID,
     client: OpenFGAClient,
+    relation: str = "viewer",
 ) -> None:
+    """Write one OpenFGA relation for this member. A later grant replaces it."""
+    if relation not in DOCUMENT_RELATIONS:
+        raise InvalidGrant("An uploaded document uses viewer, analyst, or auditor")
     document = await get_document(document_id)
     member = await get_by_id(member_id)
     if document is None or member is None:
         raise DocumentNotFound(str(document_id))
     if member.id == document.owner_id:
         return
-    await create_permission(client, "member", member.id, "viewer", upload_object(document.id))
+    target = upload_object(document.id)
+    subject = member_subject(member.id)
+    existing = [
+        grant
+        for grant in await list_grants()
+        if grant.object_id == target and grant.subject == subject
+    ]
+    if not existing:
+        await create_permission(client, "member", member.id, relation, target)
+        return
+    if existing[0].relation != relation:
+        await update_permission(client, existing[0].id, relation)
+    for extra in existing[1:]:
+        await delete_permission(client, extra.id)
 
 
 async def unshare_document(
@@ -241,8 +262,13 @@ async def ensure_can_view(user: User, document_id: uuid.UUID) -> None:
     document = await get_document(document_id)
     if document is None:
         raise DocumentNotFound(str(document_id))
-    granted = _granted_users(await list_grants(), document.id)
-    if not can_view(user, document, granted):
+    if user.role == "super_admin" or user.id == document.owner_id:
+        return
+    from app.authz.client import get_openfga_client
+
+    client = get_openfga_client()
+    grants = await _synced_grants(client)
+    if not await allowed_by_openfga(user, document, grants, client):
         raise DocumentAccessError(document.filename)
 
 
@@ -255,12 +281,10 @@ async def ask_document(
     conversation_id: uuid.UUID | None = None,
     intent: UserIntent | None = None,
 ) -> LibraryAskResponse:
+    await ensure_can_view(user, document_id)
     document = await get_document(document_id)
     if document is None:
         raise DocumentNotFound(str(document_id))
-    granted = _granted_users(await list_grants(), document.id)
-    if not can_view(user, document, granted):
-        raise DocumentAccessError(document.filename)
     retrieval = get_settings()
     intent = intent or classify_intent(question, prior)
     chat = (chat_settings or retrieval).model_copy(update={"llm_timeout_seconds": 180})
@@ -387,6 +411,69 @@ async def _rank(
     except EmbeddingError:
         return [index for index, _content, _vector in rows][:6]
     return rank_by_vector(embedded[0], rows, limit=6)
+
+
+async def allowed_by_openfga(
+    user: User,
+    document: UploadedDocument,
+    grants: Sequence[AccessGrant],
+    client: OpenFGAClient,
+) -> bool:
+    """Owner and super admin may read. Another member needs an allowed relation."""
+    if user.role == "super_admin" or user.id == document.owner_id:
+        return True
+    subject = member_subject(user.id)
+    target = upload_object(document.id)
+    relations = [
+        grant.relation
+        for grant in grants
+        if grant.object_id == target
+        and grant.subject == subject
+        and grant.relation in DOCUMENT_RELATIONS
+    ]
+    for relation in relations:
+        if await client.check(subject, relation, target):
+            return True
+    return False
+
+
+async def _may_read(
+    user: User,
+    document: UploadedDocument,
+    grants: Sequence[AccessGrant],
+    client: OpenFGAClient | None,
+) -> bool:
+    if user.role == "super_admin" or user.id == document.owner_id:
+        return True
+    if client is None:
+        return False
+    return await allowed_by_openfga(user, document, grants, client)
+
+
+async def _checker_for(
+    user: User,
+    documents: Sequence[UploadedDocument],
+    grants: Sequence[AccessGrant],
+    space: str | None,
+) -> OpenFGAClient | None:
+    if user.role == "super_admin":
+        return None
+    for document in documents:
+        if space is not None and document.space != space:
+            continue
+        if document.owner_id == user.id:
+            continue
+        if user.id in _granted_users(grants, document.id):
+            from app.authz.client import get_openfga_client
+
+            return get_openfga_client()
+    return None
+
+
+async def _synced_grants(client: OpenFGAClient) -> list[AccessGrant]:
+    from app.services.access import sync_grants
+
+    return await sync_grants(client)
 
 
 def _granted_users(grants: Sequence[AccessGrant], document_id: uuid.UUID) -> set[uuid.UUID]:

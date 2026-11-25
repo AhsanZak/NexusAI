@@ -97,8 +97,8 @@ def validate_grant(object_id: str, relation: str) -> None:
             raise InvalidGrant("AI model and analysis use the can_use relation")
         return
     if object_id.startswith("document:upload-"):
-        if relation != "viewer":
-            raise InvalidGrant("An uploaded document uses the viewer relation")
+        if relation not in DOCUMENT_RELATIONS:
+            raise InvalidGrant("An uploaded document uses viewer, analyst, or auditor")
         return
     raise InvalidGrant("Unknown document or feature")
 

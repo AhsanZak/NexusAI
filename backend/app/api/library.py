@@ -57,7 +57,10 @@ async def my_library(
             space_by_id(space)
         except UnknownSpace as exc:
             _fail(status.HTTP_422_UNPROCESSABLE_ENTITY, "That knowledge space does not exist", exc)
-    return await documents_for(user, space)
+    try:
+        return await documents_for(user, space)
+    except OpenFGAError as exc:
+        raise _unavailable(exc) from exc
 
 
 @router.post("/library", response_model=LibraryDocument, status_code=status.HTTP_201_CREATED)
@@ -90,7 +93,10 @@ async def upload_library_document(
         _fail(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc), exc)
     except OpenFGAError as exc:
         raise _unavailable(exc) from exc
-    saved = await documents_for(user)
+    try:
+        saved = await documents_for(user)
+    except OpenFGAError as exc:
+        raise _unavailable(exc) from exc
     match = next((item for item in saved if item.id == document.id), None)
     if match is None:
         _fail(status.HTTP_500_INTERNAL_SERVER_ERROR, "Upload was not saved", RuntimeError())
@@ -130,6 +136,8 @@ async def ask_library_document(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="An admin has not granted this account access to that document",
         ) from exc
+    except OpenFGAError as exc:
+        raise _unavailable(exc) from exc
     answer = result.answer if result.status == "success" and result.answer else result.error_message
     await add_exchange(
         user.id,
@@ -168,7 +176,7 @@ async def grant_library_access(
     _admin: Annotated[User, Depends(require_super_admin)],
 ) -> None:
     try:
-        await share_document(document_id, body.user_id, get_openfga_client())
+        await share_document(document_id, body.user_id, get_openfga_client(), body.relation)
     except DocumentNotFound as exc:
         _fail(status.HTTP_404_NOT_FOUND, "That document or member was not found", exc)
     except InvalidGrant as exc:

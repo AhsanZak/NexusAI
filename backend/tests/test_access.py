@@ -45,6 +45,9 @@ def test_catalog_accepts_document_relations_and_feature_use() -> None:
         validate_grant("feature:analysis", "viewer")
     with pytest.raises(InvalidGrant):
         validate_grant("document:missing", "viewer")
+    validate_grant("document:upload-11111111-1111-1111-1111-111111111111", "auditor")
+    with pytest.raises(InvalidGrant):
+        validate_grant("document:upload-11111111-1111-1111-1111-111111111111", "can_use")
 
 
 def test_authorization_model_includes_features() -> None:

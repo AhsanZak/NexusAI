@@ -35,6 +35,7 @@ export interface DocumentAccess {
   display_name: string;
   email: string;
   owner: boolean;
+  relation: string;
 }
 
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -109,11 +110,15 @@ export async function loadDocumentAccess(documentId: string): Promise<DocumentAc
   return (await response.json()) as DocumentAccess[];
 }
 
-export async function grantDocumentAccess(documentId: string, userId: string): Promise<void> {
+export async function grantDocumentAccess(
+  documentId: string,
+  userId: string,
+  relation: string,
+): Promise<void> {
   const response = await fetch(`${apiBase}/api/v1/admin/library/${documentId}/access`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ user_id: userId }),
+    body: JSON.stringify({ user_id: userId, relation }),
   });
   if (!response.ok) {
     throw new Error(await errorMessage(response, "Access could not be granted"));

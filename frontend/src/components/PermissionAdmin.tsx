@@ -94,9 +94,9 @@ export function PermissionAdmin() {
       <Typography.Title level={4}>OpenFGA permissions</Typography.Title>
       <Typography.Paragraph>
         Create, update, and remove grants here. Each row is written to OpenFGA. A signed-in member
-        is checked as that member. Guest is a separate subject, user:guest, with no login. There
-        is no category list yet. Documents, the AI model, and analysis are the objects a member can
-        receive.
+        is checked as that member. Guest is a separate subject, user:guest, with no login. Uploaded
+        files are in this list too. A file uses viewer, analyst, or auditor. The AI model and
+        analysis use can_use.
       </Typography.Paragraph>
       {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
       <Form layout="inline" style={{ marginBottom: 16, rowGap: 8 }}>

@@ -63,7 +63,16 @@ class _Resolved:
     user_id: uuid.UUID | None
 
 
-def catalog() -> list[CatalogItem]:
+async def upload_names() -> dict[str, str]:
+    """Map each uploaded OpenFGA object to the file name an admin sees."""
+    from app.repositories.uploads import list_documents
+    from app.services.library import upload_object
+
+    documents = await list_documents()
+    return {upload_object(item.id): item.filename for item in documents}
+
+
+def catalog(names: dict[str, str] | None = None) -> list[CatalogItem]:
     items = [
         CatalogItem(
             object_id=document.object_id,
@@ -84,6 +93,16 @@ def catalog() -> list[CatalogItem]:
         )
         for feature in FEATURES
     )
+    for object_id, filename in sorted((names or {}).items(), key=lambda item: item[1].lower()):
+        items.append(
+            CatalogItem(
+                object_id=object_id,
+                name=filename,
+                object_type="document",
+                releasing_relation="viewer",
+                relations=list(DOCUMENT_RELATIONS),
+            )
+        )
     return items
 
 
@@ -116,12 +135,14 @@ async def sync_grants(client: OpenFGAClient) -> list[AccessGrant]:
 async def list_permissions(client: OpenFGAClient) -> PermissionListResponse:
     grants = await sync_grants(client)
     users = await list_users_by_id()
+    names = await upload_names()
+    hidden = await _owner_upload_tuples()
     return PermissionListResponse(
-        catalog=catalog(),
+        catalog=catalog(names),
         grants=[
-            _grant_response(item, users)
+            _grant_response(item, users, names)
             for item in grants
-            if not item.object_id.startswith("document:upload-")
+            if (item.subject, item.relation, item.object_id) not in hidden
         ],
     )
 
@@ -143,7 +164,7 @@ async def create_permission(
         await delete_grant(grant.id)
         raise
     users = await list_users_by_id()
-    return _grant_response(grant, users)
+    return _grant_response(grant, users, await upload_names())
 
 
 async def update_permission(
@@ -158,7 +179,7 @@ async def update_permission(
     previous = (current.subject, current.relation, current.object_id)
     if relation == current.relation:
         users = await list_users_by_id()
-        return _grant_response(current, users)
+        return _grant_response(current, users, await upload_names())
     updated = await update_grant_relation(grant_id, relation)
     try:
         await client.prepare()
@@ -168,7 +189,7 @@ async def update_permission(
         await update_grant_relation(grant_id, previous[1])
         raise
     users = await list_users_by_id()
-    return _grant_response(updated, users)
+    return _grant_response(updated, users, await upload_names())
 
 
 async def delete_permission(client: OpenFGAClient, grant_id: uuid.UUID) -> None:
@@ -188,6 +209,7 @@ async def delete_permission(client: OpenFGAClient, grant_id: uuid.UUID) -> None:
 async def my_access(user: User, client: OpenFGAClient) -> MyAccessResponse:
     """Check the signed-in account and, separately, the guest subject."""
     grants = await sync_grants(client)
+    names = await upload_names()
     actor: Literal["member", "super_admin"] = (
         "super_admin" if user.role == "super_admin" else "member"
     )
@@ -225,8 +247,12 @@ async def my_access(user: User, client: OpenFGAClient) -> MyAccessResponse:
         role=user.role,
         features=features,
         documents=documents,
-        assignments=[_assignment(item) for item in grants if item.subject == subject],
-        guest_assignments=[_assignment(item) for item in grants if item.subject == GUEST_SUBJECT],
+        assignments=[
+            _assignment(item, names) for item in grants if item.subject == subject
+        ],
+        guest_assignments=[
+            _assignment(item, names) for item in grants if item.subject == GUEST_SUBJECT
+        ],
     )
 
 
@@ -248,7 +274,22 @@ async def _resolve(subject_kind: str, user_id: uuid.UUID | None) -> _Resolved:
     return _Resolved(member_subject(user.id), user.id)
 
 
-def _grant_response(grant: AccessGrant, users: dict[uuid.UUID, User]) -> GrantResponse:
+async def _owner_upload_tuples() -> set[tuple[str, str, str]]:
+    """The uploader's own viewer tuple is not an admin grant."""
+    from app.repositories.uploads import list_documents
+    from app.services.library import upload_object
+
+    documents = await list_documents()
+    return {
+        (member_subject(item.owner_id), "viewer", upload_object(item.id)) for item in documents
+    }
+
+
+def _grant_response(
+    grant: AccessGrant,
+    users: dict[uuid.UUID, User],
+    names: dict[str, str] | None = None,
+) -> GrantResponse:
     actor: Literal["member", "guest"]
     if grant.subject == GUEST_SUBJECT:
         actor = "guest"
@@ -268,17 +309,23 @@ def _grant_response(grant: AccessGrant, users: dict[uuid.UUID, User]) -> GrantRe
         email=email,
         relation=grant.relation,
         object_id=grant.object_id,
-        object_name=object_name(grant.object_id),
+        object_name=_named(grant.object_id, names),
         object_type=object_type(grant.object_id),
         created_at=grant.created_at,
     )
 
 
-def _assignment(grant: AccessGrant) -> AssignmentView:
+def _named(object_id: str, names: dict[str, str] | None) -> str:
+    if names and object_id in names:
+        return names[object_id]
+    return object_name(object_id)
+
+
+def _assignment(grant: AccessGrant, names: dict[str, str] | None = None) -> AssignmentView:
     return AssignmentView(
         relation=grant.relation,
         object_id=grant.object_id,
-        object_name=object_name(grant.object_id),
+        object_name=_named(grant.object_id, names),
         object_type=object_type(grant.object_id),
         actor="guest" if grant.subject == GUEST_SUBJECT else "member",
     )

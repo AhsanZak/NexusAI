@@ -3,13 +3,16 @@
 import io
 import uuid
 
+import pytest
 from docx import Document
 from openpyxl import Workbook
 
 from app.documents.extract import extract_upload, markdown_table
 from app.documents.vectors import chunk_text, rank_chunks, term_vector
+from app.models.access_grant import AccessGrant
 from app.models.user import User
-from app.services.library import can_view
+from app.services import library
+from app.services.library import allowed_by_openfga, can_view
 
 
 def test_markdown_table_keeps_every_cell() -> None:
@@ -96,3 +99,112 @@ def test_another_member_needs_an_admin_grant() -> None:
     assert can_view(member, _Doc(), set()) is False
     assert can_view(member, _Doc(), {member_id}) is True
     assert can_view(admin, _Doc(), set()) is True
+
+
+class _Checker:
+    def __init__(self, allowed: set[tuple[str, str, str]]) -> None:
+        self.allowed = allowed
+
+    async def check(self, user: str, relation: str, object_id: str) -> bool:
+        return (user, relation, object_id) in self.allowed
+
+
+class _Upload:
+    def __init__(self, document_id: uuid.UUID, owner_id: uuid.UUID) -> None:
+        self.id = document_id
+        self.owner_id = owner_id
+
+
+def _grant(document_id: uuid.UUID, member_id: uuid.UUID, relation: str) -> AccessGrant:
+    return AccessGrant(
+        subject=f"user:{member_id}",
+        user_id=member_id,
+        relation=relation,
+        object_id=f"document:upload-{document_id}",
+    )
+
+
+@pytest.mark.asyncio
+async def test_openfga_relation_decides_whether_a_member_can_read() -> None:
+    document_id = uuid.uuid4()
+    owner_id = uuid.uuid4()
+    member_id = uuid.uuid4()
+    document = _Upload(document_id, owner_id)
+    member = User(
+        id=member_id,
+        email="member@nexusai.local",
+        display_name="Member",
+        password_hash="x",
+        role="member",
+    )
+    target = f"document:upload-{document_id}"
+    subject = f"user:{member_id}"
+    grants = [_grant(document_id, member_id, "analyst")]
+    allowed = _Checker({(subject, "analyst", target)})
+    denied = _Checker(set())
+    assert await allowed_by_openfga(member, document, grants, allowed) is True  # type: ignore[arg-type]
+    assert await allowed_by_openfga(member, document, grants, denied) is False  # type: ignore[arg-type]
+    assert await allowed_by_openfga(member, document, [], allowed) is False  # type: ignore[arg-type]
+
+
+@pytest.mark.asyncio
+async def test_share_writes_the_chosen_relation_and_replaces_the_old_one(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    document_id = uuid.uuid4()
+    member_id = uuid.uuid4()
+    owner_id = uuid.uuid4()
+    written: dict[str, str] = {}
+    updated: dict[str, str] = {}
+    current = _grant(document_id, member_id, "viewer")
+
+    async def get_document(document: uuid.UUID) -> _Upload:
+        assert document == document_id
+        return _Upload(document_id, owner_id)
+
+    async def get_by_id(user_id: uuid.UUID) -> User:
+        assert user_id == member_id
+        return User(
+            id=member_id,
+            email="member@nexusai.local",
+            display_name="Member",
+            password_hash="x",
+            role="member",
+        )
+
+    grants = {"rows": []}
+
+    async def list_grants() -> list[AccessGrant]:
+        return list(grants["rows"])
+
+    async def create_permission(
+        _client: object,
+        _kind: str,
+        user_id: uuid.UUID,
+        relation: str,
+        object_id: str,
+    ) -> None:
+        written["user"] = str(user_id)
+        written["relation"] = relation
+        written["object"] = object_id
+
+    async def update_permission(_client: object, grant_id: uuid.UUID, relation: str) -> None:
+        assert grant_id == current.id
+        updated["relation"] = relation
+
+    monkeypatch.setattr(library, "get_document", get_document)
+    monkeypatch.setattr(library, "get_by_id", get_by_id)
+    monkeypatch.setattr(library, "list_grants", list_grants)
+    monkeypatch.setattr(library, "create_permission", create_permission)
+    monkeypatch.setattr(library, "update_permission", update_permission)
+
+    await library.share_document(document_id, member_id, object(), "analyst")  # type: ignore[arg-type]
+    assert written == {
+        "user": str(member_id),
+        "relation": "analyst",
+        "object": f"document:upload-{document_id}",
+    }
+
+    grants["rows"] = [current]
+    await library.share_document(document_id, member_id, object(), "auditor")  # type: ignore[arg-type]
+    assert updated["relation"] == "auditor"

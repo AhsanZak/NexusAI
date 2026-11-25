@@ -200,6 +200,11 @@ async def _view_document(user: User, document_id: uuid.UUID) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="An admin has not granted this account access to that document",
         ) from exc
+    except OpenFGAError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Access control is unavailable",
+        ) from exc
 
 
 async def choice_settings(user: User, model_id: str | None) -> tuple[str, Settings]:

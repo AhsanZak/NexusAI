@@ -46,6 +46,7 @@ class LibraryAskResponse(BaseModel):
 
 class ShareRequest(BaseModel):
     user_id: UUID
+    relation: str = Field(default="viewer", min_length=1, max_length=32)
 
 
 class DocumentAccess(BaseModel):
@@ -53,3 +54,4 @@ class DocumentAccess(BaseModel):
     display_name: str
     email: str
     owner: bool
+    relation: str
