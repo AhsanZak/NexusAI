@@ -1,8 +1,18 @@
 import { ReloadOutlined } from "@ant-design/icons";
-import { Alert, Button, Select, Space, Tag, Typography } from "antd";
+import { Alert, Button, Select, Space, Tooltip } from "antd";
 import { useState } from "react";
 
+import litellmMark from "../assets/brands/litellm.svg";
+import ollamaMark from "../assets/brands/ollama.svg";
+import openaiMark from "../assets/brands/openai.svg";
 import { useChatModel } from "../chat/models";
+
+const MARKS: Record<string, string> = {
+  "local-ollama": ollamaMark,
+  "smart-ollama": ollamaMark,
+  openai: openaiMark,
+  litellm: litellmMark,
+};
 
 export function ModelRouteBar() {
   const { models, modelId, choose, refresh } = useChatModel();
@@ -12,7 +22,6 @@ export function ModelRouteBar() {
   return (
     <div>
       <Space align="center" wrap>
-        <Typography.Text strong>Model</Typography.Text>
         <Select
           value={models.some((item) => item.id === modelId) ? modelId : undefined}
           placeholder="Choose a model"
@@ -38,15 +47,30 @@ export function ModelRouteBar() {
         >
           Refresh
         </Button>
+        {models.map((item) => {
+          const up = item.state === "up";
+          return (
+            <Tooltip key={item.id} title={item.name}>
+              <span aria-label={item.name} style={{ position: "relative", display: "inline-flex" }}>
+                <img src={MARKS[item.id] ?? litellmMark} alt="" width={18} height={18} />
+                <span
+                  style={{
+                    position: "absolute",
+                    right: -3,
+                    bottom: -2,
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: up ? "#52c41a" : "#ff4d4f",
+                    boxShadow: "0 0 0 1px #fff",
+                  }}
+                />
+              </span>
+            </Tooltip>
+          );
+        })}
       </Space>
       {error ? <Alert type="error" showIcon message={error} style={{ marginTop: 12 }} /> : null}
-      <Space wrap style={{ marginTop: 8 }}>
-        {models.map((item) => (
-          <Tag key={item.id} color={item.state === "up" ? "success" : "error"}>
-            {item.name}: {item.state === "up" ? "Working" : "Not working"}
-          </Tag>
-        ))}
-      </Space>
     </div>
   );
 }
