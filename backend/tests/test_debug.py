@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.ai.gateway import LLMCallError, complete, scrub
+from app.ai.gateway import LLMCallError, complete, direct_ollama_kwargs, scrub
 from app.core.config import get_settings
 from app.repositories.llm_traces import init_trace_store
 
@@ -192,3 +192,16 @@ def test_debug_page_can_list_and_inspect_a_failed_call(client: TestClient) -> No
 def test_unknown_trace_is_not_found(client: TestClient) -> None:
     response = client.get("/api/v1/debug/traces/missing")
     assert response.status_code == 404
+
+
+def test_direct_ollama_turns_thinking_off() -> None:
+    assert direct_ollama_kwargs("ollama/qwen3.8:27b", "http://192.168.100.11:11434") == {
+        "reasoning_effort": "none"
+    }
+
+
+def test_proxy_ollama_turns_thinking_off() -> None:
+    assert direct_ollama_kwargs("openai/smart-ollama", "http://127.0.0.1:4000") == {
+        "reasoning_effort": "none"
+    }
+    assert direct_ollama_kwargs("openai/gpt-4o-mini", "http://127.0.0.1:4000") == {}

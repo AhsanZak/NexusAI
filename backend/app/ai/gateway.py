@@ -113,15 +113,23 @@ async def call_model(
         kwargs["api_base"] = api_base
     if temperature is not None:
         kwargs["temperature"] = temperature
-    # Qwen thinking adds a long hidden pass. These chat routes answer from the documents.
-    proxy_ollama = _is_litellm_proxy(api_base) and model in {
-        "openai/smart-ollama",
-        "openai/chat-default",
-        "openai/local-ollama",
-    }
-    if model.startswith("ollama/") or ":11434" in api_base or proxy_ollama:
-        kwargs["reasoning_effort"] = "none"
+    kwargs.update(direct_ollama_kwargs(model, api_base))
     return await acompletion(**kwargs)
+
+
+_PROXY_OLLAMA = {
+    "openai/smart-ollama",
+    "openai/chat-default",
+    "openai/local-ollama",
+}
+
+
+def direct_ollama_kwargs(model: str, api_base: str) -> dict[str, str]:
+    """Turn off Qwen thinking. The proxy drops this parameter on an OpenAI fallback."""
+    through_proxy = _is_litellm_proxy(api_base) and model in _PROXY_OLLAMA
+    if through_proxy or model.startswith("ollama/") or ":11434" in api_base:
+        return {"reasoning_effort": "none"}
+    return {}
 
 
 def _usage_count(usage: Any, name: str) -> int | None:
