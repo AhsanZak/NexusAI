@@ -99,10 +99,11 @@ export function PermissionAdmin() {
         analysis use can_use.
       </Typography.Paragraph>
       {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
-      <Form layout="inline" style={{ marginBottom: 16, rowGap: 8 }}>
+      <Form className="grant-form" layout="inline" style={{ marginBottom: 16, rowGap: 8 }}>
         <Form.Item label="Who">
           <Select
             value={who}
+            popupMatchSelectWidth={false}
             style={{ minWidth: 260 }}
             onChange={setWho}
             options={[
@@ -117,6 +118,7 @@ export function PermissionAdmin() {
         <Form.Item label="Object">
           <Select
             value={objectId || undefined}
+            popupMatchSelectWidth={false}
             style={{ minWidth: 240 }}
             onChange={setObjectId}
             options={(data?.catalog ?? []).map((item) => ({
@@ -142,6 +144,7 @@ export function PermissionAdmin() {
         loading={loading}
         dataSource={data?.grants ?? []}
         pagination={false}
+        scroll={{ x: "max-content" }}
         columns={[
           {
             title: "Who",

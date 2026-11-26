@@ -50,6 +50,23 @@ class Settings(BaseSettings):
         repr=False,
         validation_alias=AliasChoices("LITELLM_MASTER_KEY", "NEXUS_LITELLM_MASTER_KEY"),
     )
+    langsmith_api_key: str = Field(
+        default="",
+        repr=False,
+        validation_alias=AliasChoices("LANGSMITH_API_KEY", "NEXUS_LANGSMITH_API_KEY"),
+    )
+    langsmith_project: str = Field(
+        default="nexusai",
+        validation_alias=AliasChoices("LANGSMITH_PROJECT", "NEXUS_LANGSMITH_PROJECT"),
+    )
+    langsmith_endpoint: str = Field(
+        default="https://eu.api.smith.langchain.com",
+        validation_alias=AliasChoices(
+            "LANGSMITH_BASE_URL",
+            "LANGSMITH_ENDPOINT",
+            "NEXUS_LANGSMITH_ENDPOINT",
+        ),
+    )
 
     @property
     def cors_origin_list(self) -> list[str]:

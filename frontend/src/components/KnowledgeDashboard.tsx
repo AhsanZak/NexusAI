@@ -78,6 +78,7 @@ export function KnowledgeDashboard() {
       </Row>
       <Card title="Conversation history" style={{ marginTop: 16 }}>
         <List
+          className="history-list"
           dataSource={home.conversations}
           locale={{ emptyText: "No chats yet. Open a space and ask about a file." }}
           renderItem={(item) => (

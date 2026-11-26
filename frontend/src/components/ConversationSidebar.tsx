@@ -21,7 +21,7 @@ export function ConversationSidebar({
   fileName?: string | null;
 }) {
   return (
-    <div style={{ width: 260, flex: "0 0 260px" }}>
+    <div className="conversation-sidebar">
       <Button block type="primary" icon={<PlusOutlined />} onClick={onCreate} style={{ marginBottom: 12 }}>
         New chat
       </Button>

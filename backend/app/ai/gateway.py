@@ -1,5 +1,6 @@
 """Single entry point for chat models. Callers use an alias, not a provider SDK."""
 
+import os
 import re
 import time
 from typing import Any
@@ -84,7 +85,6 @@ def _scrub_content(content: Any) -> str:
         text = f"{text}\n{note}" if text else note
     return text
 
-
 async def call_model(
     *,
     model: str,
@@ -94,6 +94,7 @@ async def call_model(
     timeout: float,
     num_retries: int,
     temperature: float | None = None,
+    source: str = "chat",
 ) -> Any:
     """The only function that imports LiteLLM."""
     import litellm
@@ -101,11 +102,13 @@ async def call_model(
 
     litellm.telemetry = False
     litellm.drop_params = True
+    _enable_langsmith()
     kwargs: dict[str, Any] = {
         "model": model,
         "messages": messages,
         "timeout": timeout,
         "num_retries": num_retries,
+        "metadata": {"run_name": source},
     }
     if api_key:
         kwargs["api_key"] = api_key
@@ -115,6 +118,25 @@ async def call_model(
         kwargs["temperature"] = temperature
     kwargs.update(direct_ollama_kwargs(model, api_base))
     return await acompletion(**kwargs)
+
+
+def _enable_langsmith() -> None:
+    """Send each LiteLLM call to LangSmith when a key is configured."""
+    settings = get_settings()
+    api_key = os.environ.get("LANGSMITH_API_KEY", "").strip() or settings.langsmith_api_key.strip()
+    if not api_key:
+        return
+    os.environ["LANGSMITH_API_KEY"] = api_key
+    os.environ["LANGSMITH_PROJECT"] = (
+        os.environ.get("LANGSMITH_PROJECT", "").strip() or settings.langsmith_project
+    )
+    endpoint = os.environ.get("LANGSMITH_BASE_URL", "").strip() or settings.langsmith_endpoint
+    os.environ["LANGSMITH_ENDPOINT"] = endpoint
+    os.environ["LANGSMITH_BASE_URL"] = endpoint
+    import litellm
+
+    litellm.success_callback = ["langsmith"]
+    litellm.failure_callback = ["langsmith"]
 
 
 _PROXY_OLLAMA = {

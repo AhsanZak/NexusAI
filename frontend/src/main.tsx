@@ -4,7 +4,10 @@ import { BrowserRouter } from "react-router-dom";
 import { ConfigProvider } from "antd";
 
 import { App } from "./App";
+import { watchKeyboard } from "./keyboard";
 import "./index.css";
+
+watchKeyboard();
 
 const root = document.getElementById("root");
 if (!root) {

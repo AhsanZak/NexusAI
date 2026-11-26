@@ -16,6 +16,7 @@ import { loadSession } from "../auth/session";
 import { useChatModel } from "../chat/models";
 import { ChatHistory } from "../components/ChatHistory";
 import { ConversationSidebar } from "../components/ConversationSidebar";
+import { DeviceActions } from "../components/DeviceActions";
 import { SpaceIcon } from "../components/SpaceIcon";
 
 export function DocumentChatPage() {
@@ -164,7 +165,15 @@ export function DocumentChatPage() {
           Upload into {meta?.label ?? "this space"}
         </Button>
       </Upload>
+      <DeviceActions
+        busy={uploading}
+        onFile={(file) => void onUpload(file)}
+        shareTitle={selected?.filename}
+        shareTextValue={selected ? `${selected.filename}\n${selected.excerpt}` : undefined}
+        onMessage={setError}
+      />
       <List
+        className="file-list"
         style={{ marginTop: 16 }}
         dataSource={documents}
         locale={{ emptyText: "No files in this space yet." }}
@@ -176,10 +185,10 @@ export function DocumentChatPage() {
               setConversationId(null);
             }}
           >
-            <Space align="start">
+            <Space align="start" style={{ width: "100%", minWidth: 0 }}>
               <Avatar icon={<SpaceIcon space={item.space} />} style={{ background: "#f0f5ff", color: "#1677ff" }} />
-              <Space direction="vertical" size={2}>
-                <Space>
+              <Space direction="vertical" size={2} style={{ minWidth: 0, flex: 1 }}>
+                <Space wrap>
                   <Typography.Text strong>{item.filename}</Typography.Text>
                   {item.shared ? <Tag color="blue">Shared with you</Tag> : <Tag color="green">Yours</Tag>}
                 </Space>
@@ -193,7 +202,7 @@ export function DocumentChatPage() {
       />
       {selected ? (
         <Card title={`Ask about ${selected.filename}`} style={{ marginTop: 16 }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+          <div className="chat-layout">
             <ConversationSidebar
               conversations={conversations}
               selectedId={conversationId}
@@ -238,23 +247,26 @@ export function DocumentChatPage() {
                   : undefined
               }
             />
-            <Space direction="vertical" size="middle" style={{ flex: 1, minWidth: 0 }}>
+            <Space className="chat-panel" direction="vertical" size="middle">
               <ChatHistory messages={history} />
-              <Input.TextArea
-                rows={3}
-                value={prompt}
-                placeholder={meta?.placeholder}
-                onChange={(event) => setPrompt(event.target.value)}
-              />
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={() => void onAsk()}
-                loading={asking}
-                disabled={!prompt.trim()}
-              >
-                Ask
-              </Button>
+              <div className="composer">
+                <Input.TextArea
+                  rows={3}
+                  value={prompt}
+                  placeholder={meta?.placeholder}
+                  onChange={(event) => setPrompt(event.target.value)}
+                />
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  onClick={() => void onAsk()}
+                  loading={asking}
+                  disabled={!prompt.trim()}
+                  style={{ marginTop: 12 }}
+                >
+                  Ask
+                </Button>
+              </div>
             </Space>
           </div>
         </Card>

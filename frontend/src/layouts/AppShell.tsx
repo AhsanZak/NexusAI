@@ -4,12 +4,13 @@ import {
   BugOutlined,
   DashboardOutlined,
   FileSearchOutlined,
+  MenuOutlined,
   ReadOutlined,
   RobotOutlined,
   TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Alert, Card, Layout, Menu, Typography } from "antd";
+import { Alert, Button, Card, Drawer, Layout, Menu, Typography } from "antd";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
@@ -28,6 +29,7 @@ import { DocumentsPage } from "../pages/DocumentsPage";
 import { MemberHomePage } from "../pages/MemberHomePage";
 import { OverviewPage } from "../pages/OverviewPage";
 import { PlaceholderPage } from "../pages/PlaceholderPage";
+import { useNarrow } from "../ui/useNarrow";
 
 const { Header, Sider, Content } = Layout;
 
@@ -35,7 +37,9 @@ export function AppShell() {
   const location = useLocation();
   const session = loadSession();
   const admin = session?.user.role === "super_admin";
+  const narrow = useNarrow();
   const [collapsed, setCollapsed] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [access, setAccess] = useState<MyAccess | null>(null);
   const [accessReady, setAccessReady] = useState(admin);
 
@@ -51,6 +55,10 @@ export function AppShell() {
       .catch(() => setAccessReady(true));
   }, [admin]);
 
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
+
   const canModel = featureAllowed(access, "feature:ai-model", admin);
   const canAnalysis = featureAllowed(access, "feature:analysis", admin);
   const items = navItems(admin, canModel, canAnalysis);
@@ -63,24 +71,44 @@ export function AppShell() {
   return (
     <ChatModelProvider>
     <Layout className="app-shell">
-      <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="light" width={220}>
-        <Typography.Title level={4} style={{ margin: "16px 20px" }}>
-          {collapsed ? "N" : "NexusAI"}
-        </Typography.Title>
-        <Menu mode="inline" selectedKeys={[selected]} items={items} />
-      </Sider>
-      <Layout className="app-main">
-        <Header
-          style={{
-            background: "#fff",
-            padding: "12px 24px",
-            height: "auto",
-            lineHeight: "normal",
-            borderBottom: "1px solid #f0f0f0",
-          }}
+      {narrow ? (
+        <Drawer
+          className="nav-drawer"
+          title="NexusAI"
+          placement="left"
+          width={280}
+          open={navOpen}
+          onClose={() => setNavOpen(false)}
         >
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <Menu
+            mode="inline"
+            selectedKeys={[selected]}
+            items={items}
+            style={{ borderInlineEnd: "none" }}
+            onClick={() => setNavOpen(false)}
+          />
+        </Drawer>
+      ) : (
+        <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="light" width={220}>
+          <Typography.Title level={4} style={{ margin: "16px 20px" }}>
+            {collapsed ? "N" : "NexusAI"}
+          </Typography.Title>
+          <Menu mode="inline" selectedKeys={[selected]} items={items} />
+        </Sider>
+      )}
+      <Layout className="app-main">
+        <Header className="app-header">
+          <div className="app-header-bar">
+            {narrow ? (
+              <Button
+                className="nav-toggle"
+                type="text"
+                aria-label="Open menu"
+                icon={<MenuOutlined />}
+                onClick={() => setNavOpen(true)}
+              />
+            ) : null}
+            <div className="app-header-models">
               <ModelRouteBar />
             </div>
             <CurrentUser />

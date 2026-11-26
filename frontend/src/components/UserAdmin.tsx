@@ -73,6 +73,7 @@ export function UserAdmin() {
         loading={loading}
         dataSource={users}
         pagination={false}
+        scroll={{ x: "max-content" }}
         columns={[
           { title: "Name", dataIndex: "display_name" },
           { title: "Email", dataIndex: "email" },

@@ -5,7 +5,7 @@ type Block = { kind: "paragraph"; text: string } | { kind: "list"; items: string
 export function AnswerText({ text }: { text: string }) {
   const blocks = blocksFrom(text);
   return (
-    <div style={{ lineHeight: 1.65 }}>
+    <div className="answer-text" style={{ lineHeight: 1.65 }}>
       {blocks.map((block, index) =>
         block.kind === "list" ? (
           <ul key={index} style={{ margin: "4px 0 12px", paddingInlineStart: 22 }}>

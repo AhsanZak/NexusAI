@@ -14,15 +14,17 @@ export function CurrentUser() {
 
   const admin = session.user.role === "super_admin";
   return (
-    <Space size={8} wrap style={{ justifyContent: "flex-end" }}>
+    <Space className="current-user" size={8} wrap style={{ justifyContent: "flex-end" }}>
       <Avatar size="small" icon={<UserOutlined />} />
       <Tag color={admin ? "blue" : "green"}>{admin ? "Super admin" : "Member"}</Tag>
-      <Typography.Text>
+      <Typography.Text className="current-user-name">
         {session.user.display_name}
         <Typography.Text type="secondary"> · {session.user.email}</Typography.Text>
       </Typography.Text>
       <Button
+        className="current-user-logout"
         size="small"
+        aria-label="Log out"
         icon={<LogoutOutlined />}
         onClick={() => {
           clearSession();

@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { loadOlistDashboard, type OlistCategory, type OlistDashboard, type OlistPayment } from "../api/olist";
+import { useNarrow } from "../ui/useNarrow";
 
 export function AnalyticsPage() {
+  const narrow = useNarrow();
   const [dashboard, setDashboard] = useState<OlistDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,12 +76,19 @@ export function AnalyticsPage() {
         </Col>
       </Row>
       <Card title="Monthly item revenue" style={{ marginTop: 16 }}>
-        <div style={{ width: "100%", height: 320 }}>
+        <div style={{ width: "100%", height: narrow ? 260 : 320 }}>
           <ResponsiveContainer>
-            <BarChart data={dashboard.monthly_sales}>
+            <BarChart data={dashboard.monthly_sales} margin={{ left: 0, right: 8, bottom: narrow ? 24 : 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
+              <XAxis
+                dataKey="month"
+                tick={axisTick}
+                interval={narrow ? "preserveStartEnd" : 0}
+                angle={narrow ? -35 : 0}
+                textAnchor={narrow ? "end" : "middle"}
+                height={narrow ? 56 : 30}
+              />
+              <YAxis width={narrow ? 44 : 60} tick={axisTick} />
               <Tooltip />
               <Bar dataKey="revenue" fill="#1f4b99" name="Revenue (BRL)" />
             </BarChart>
@@ -92,6 +101,7 @@ export function AnalyticsPage() {
             <Table<OlistCategory>
               rowKey="category"
               pagination={false}
+              scroll={{ x: "max-content" }}
               columns={categoryColumns}
               dataSource={dashboard.categories}
             />
@@ -99,12 +109,12 @@ export function AnalyticsPage() {
         </Col>
         <Col xs={24} lg={10}>
           <Card title="Review scores">
-            <div style={{ width: "100%", height: 280 }}>
+            <div style={{ width: "100%", height: narrow ? 220 : 280 }}>
               <ResponsiveContainer>
-                <BarChart data={dashboard.review_scores}>
+                <BarChart data={dashboard.review_scores} margin={{ left: 0, right: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="score" />
-                  <YAxis />
+                  <XAxis dataKey="score" tick={axisTick} />
+                  <YAxis width={narrow ? 44 : 60} tick={axisTick} />
                   <Tooltip />
                   <Bar dataKey="reviews" fill="#0f766e" name="Reviews" />
                 </BarChart>
@@ -132,6 +142,7 @@ export function AnalyticsPage() {
             <Table<OlistPayment>
               rowKey="payment_type"
               pagination={false}
+              scroll={{ x: "max-content" }}
               columns={paymentColumns}
               dataSource={dashboard.payments}
             />
@@ -147,6 +158,8 @@ export function AnalyticsPage() {
     </div>
   );
 }
+
+const axisTick = { fontSize: 11 };
 
 const categoryColumns: TableColumnsType<OlistCategory> = [
   { title: "Category", dataIndex: "category" },

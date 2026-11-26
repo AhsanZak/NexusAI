@@ -26,11 +26,11 @@ export function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#f5f5f5" }}>
-      <div style={{ position: "fixed", top: 16, right: 24 }}>
+    <div className="login-page">
+      <div className="login-user">
         <CurrentUser />
       </div>
-      <Card title="NexusAI" style={{ width: 380 }}>
+      <Card className="login-card" title="NexusAI">
         <Typography.Paragraph type="secondary">Sign in with your database account.</Typography.Paragraph>
         <Form layout="vertical" onFinish={(values) => void onFinish(values)} requiredMark={false}>
           <Form.Item label="Email" name="email" rules={[{ required: true, type: "email" }]}>

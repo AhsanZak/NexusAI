@@ -6,10 +6,14 @@ import { AnswerText } from "./AnswerText";
 
 export function ChatHistory({ messages }: { messages: ChatTurn[] }) {
   if (messages.length === 0) {
-    return <Typography.Text type="secondary">No messages yet.</Typography.Text>;
+    return (
+      <div className="chat-history">
+        <Typography.Text type="secondary">No messages yet.</Typography.Text>
+      </div>
+    );
   }
   return (
-    <div style={{ maxHeight: 480, overflow: "auto" }}>
+    <div className="chat-history">
       {messages.map((message) => {
         const assistant = message.role === "assistant";
         return (

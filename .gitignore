@@ -16,6 +16,12 @@ htmlcov/
 node_modules/
 dist/
 *.tsbuildinfo
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/local.properties
+frontend/android/captures/
+*.apk
 
 data/raw/
 data/documents/

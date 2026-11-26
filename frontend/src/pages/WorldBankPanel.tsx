@@ -8,10 +8,12 @@ import {
   type WorldBankDashboard,
   type WorldBankDocument,
 } from "../api/worldbank";
+import { useNarrow } from "../ui/useNarrow";
 
 const colors = ["#1f4b99", "#c2410c", "#0f766e", "#7c3aed", "#b45309", "#be123c", "#0369a1", "#3f6212"];
 
 export function WorldBankPanel() {
+  const narrow = useNarrow();
   const [dashboard, setDashboard] = useState<WorldBankDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [indicator, setIndicator] = useState("NY.GDP.MKTP.CD");
@@ -85,21 +87,22 @@ export function WorldBankPanel() {
         extra={
           <Select
             value={indicator}
-            style={{ minWidth: 280 }}
+            popupMatchSelectWidth={false}
+            style={{ minWidth: 280, maxWidth: "100%" }}
             onChange={setIndicator}
             options={dashboard.indicators.map((item) => ({ value: item.code, label: item.name }))}
           />
         }
       >
         <Typography.Paragraph type="secondary">{scaleLabel(indicator)}</Typography.Paragraph>
-        <div style={{ width: "100%", height: 360 }}>
+        <div style={{ width: "100%", height: narrow ? 280 : 360 }}>
           <ResponsiveContainer>
-            <LineChart data={chart.rows}>
+            <LineChart data={chart.rows} margin={{ left: 0, right: 8, bottom: narrow ? 16 : 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="year" />
-              <YAxis />
+              <XAxis dataKey="year" tick={axisTick} interval={narrow ? "preserveStartEnd" : 0} />
+              <YAxis width={narrow ? 44 : 60} tick={axisTick} />
               <Tooltip />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: narrow ? 11 : 12 }} />
               {chart.countries.map((country, index) => (
                 <Line
                   key={country}
@@ -132,6 +135,8 @@ export function WorldBankPanel() {
     </div>
   );
 }
+
+const axisTick = { fontSize: 11 };
 
 const documentColumns: TableColumnsType<WorldBankDocument> = [
   { title: "Date", dataIndex: "document_date", width: 120 },

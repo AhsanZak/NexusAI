@@ -1,21 +1,56 @@
+html {
+  height: var(--app-height, 100dvh);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html,
 body,
 #root {
   height: 100%;
   margin: 0;
+  overflow: hidden;
 }
 
-.app-shell {
-  height: 100vh;
+body {
+  padding-top: var(--vv-offset, 0px);
+  box-sizing: border-box;
+  overscroll-behavior: none;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+.app-shell.ant-layout {
+  height: var(--app-height, 100dvh);
+  max-height: var(--app-height, 100dvh);
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.app-main.ant-layout {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  max-width: 100%;
   overflow: hidden;
 }
 
 .app-shell > .ant-layout-sider {
-  height: 100vh;
+  height: 100%;
   position: sticky;
   top: 0;
   inset-inline-start: 0;
   overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .app-shell .ant-layout-sider-children {
@@ -23,21 +58,488 @@ body,
   overflow: auto;
 }
 
-.app-main {
-  height: 100vh;
-  overflow: hidden;
-}
-
-.app-main > .ant-layout-header {
+.app-main > .ant-layout-header.app-header {
   position: sticky;
   top: 0;
   z-index: 10;
   flex: none;
+  background: #fff;
+  height: auto;
+  line-height: normal;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 12px 24px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-right: calc(24px + env(safe-area-inset-right));
+  padding-left: calc(24px + env(safe-area-inset-left));
 }
 
-.app-content {
+.app-header-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.app-header-models {
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-toggle {
+  flex: none;
+}
+
+.app-main > .app-content.ant-layout-content {
+  flex: 1 1 0;
   min-height: 0;
+  height: auto;
   margin: 0;
   padding: 24px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+.app-content a,
+.ant-typography,
+.ant-list-item-meta-title,
+.ant-list-item-meta-description,
+.ant-card-head-title,
+.answer-text {
+  overflow-wrap: anywhere;
+}
+
+.ant-select-item-option-content {
+  white-space: normal;
+}
+
+.login-page {
+  height: 100%;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  box-sizing: border-box;
+  background: #f5f5f5;
+  padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+}
+
+.login-user {
+  align-self: flex-end;
+}
+
+.login-card {
+  width: min(420px, 100%);
+}
+
+@media (max-height: 640px) {
+  .login-page {
+    justify-content: flex-start;
+  }
+}
+
+.page-heading {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.chat-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.conversation-sidebar {
+  width: 260px;
+  flex: 0 0 260px;
+  min-width: 0;
+}
+
+.chat-panel {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.chat-panel.ant-space {
+  display: flex;
+}
+
+.chat-history {
+  max-height: min(480px, 52dvh);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-main > .app-content.ant-layout-content:has(.chat-page) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-page .chat-layout {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chat-page .chat-panel.ant-card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-self: stretch;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+}
+
+.chat-page .chat-panel > .ant-card-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-page .chat-panel .ant-space {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.chat-page .chat-panel .ant-space-item:first-child {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+.chat-page .chat-history {
+  max-height: none;
+  min-height: 0;
+  height: auto;
+  width: 100%;
+  overflow: visible;
+}
+
+.model-route {
+  width: 100%;
+}
+
+.model-route .ant-select {
+  width: 200px;
+}
+
+.nav-drawer .ant-drawer-body {
+  padding: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-drawer .ant-drawer-header {
+  padding-top: calc(16px + env(safe-area-inset-top));
+}
+
+@media (max-width: 767px) {
+  .app-main > .ant-layout-header.app-header {
+    padding-right: calc(12px + env(safe-area-inset-right));
+    padding-left: calc(12px + env(safe-area-inset-left));
+  }
+
+  .app-header-bar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px 12px;
+  }
+
+  .nav-toggle {
+    grid-row: 1;
+    grid-column: 1;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .current-user {
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .app-header-models {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+
+  .app-content {
+    padding: 12px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    padding-right: calc(12px + env(safe-area-inset-right));
+    padding-left: calc(12px + env(safe-area-inset-left));
+  }
+
+  .app-content h3.ant-typography {
+    font-size: 22px;
+  }
+
+  .current-user-name {
+    display: none;
+  }
+
+  .current-user-logout > span:not(.anticon) {
+    display: none;
+  }
+
+  .ant-input,
+  .ant-input-affix-wrapper,
+  textarea.ant-input,
+  .ant-select-selector {
+    font-size: 16px !important;
+  }
+
+  .ant-btn {
+    min-height: 40px;
+  }
+
+  .ant-btn-sm {
+    min-height: 32px;
+  }
+
+  .ant-menu-item {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .chat-layout {
+    flex-direction: column;
+  }
+
+  .conversation-sidebar {
+    width: 100%;
+    flex: none;
+    max-width: 100%;
+  }
+
+  .conversation-sidebar .ant-list,
+  .conversation-sidebar .ant-spin-nested-loading,
+  .conversation-sidebar .ant-spin-container {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .chat-history {
+    max-height: min(420px, 42dvh);
+  }
+
+  .composer {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    flex: none;
+    background: #fff;
+    padding-top: 8px;
+  }
+
+  .chat-page .composer {
+    position: static;
+  }
+
+  .chat-page .chat-history {
+    max-height: none;
+  }
+
+  html.keyboard-open .chat-page > .ant-typography,
+  html.keyboard-open .chat-page .conversation-sidebar,
+  html.keyboard-open .app-header-models {
+    display: none;
+  }
+
+  html.keyboard-open .chat-page .composer textarea {
+    height: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .conversation-sidebar .ant-list-items {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .conversation-sidebar .ant-list-item {
+    flex: 0 0 220px;
+    scroll-snap-align: start;
+    margin-block-end: 0 !important;
+    border-block-end: none !important;
+  }
+
+  .composer .ant-btn {
+    width: 100%;
+  }
+
+  .model-route.ant-space {
+    display: flex;
+  }
+
+  .model-route .ant-space-item:first-child {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .model-route .ant-select {
+    width: 100%;
+  }
+
+  .chat-page > .ant-typography {
+    margin-bottom: 8px;
+  }
+
+  .chat-page > .ant-typography:not(h3) {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .chat-page .conversation-sidebar {
+    max-height: 96px;
+  }
+
+  .chat-page .composer textarea {
+    height: 72px !important;
+    min-height: 72px !important;
+  }
+
+  .chat-page .chat-panel .ant-space-item:last-child {
+    flex: none;
+  }
+
+  .ant-select-single .ant-select-selector {
+    min-height: 40px !important;
+    height: 40px !important;
+  }
+
+  .ant-select-single .ant-select-selection-item,
+  .ant-select-single .ant-select-selection-placeholder {
+    line-height: 38px !important;
+  }
+
+  .ant-card-head-wrapper {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .ant-card-extra:has(.ant-select) {
+    margin-inline-start: 0 !important;
+    width: 100%;
+  }
+
+  .ant-card-extra .ant-select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .current-user-logout {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .grant-form.ant-form-inline {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .grant-form .ant-form-item {
+    margin-inline-end: 0;
+    width: 100%;
+  }
+
+  .grant-form .ant-form-item-row,
+  .grant-form .ant-form-item-control,
+  .grant-form .ant-form-item-control-input,
+  .grant-form .ant-form-item-control-input-content,
+  .grant-form .ant-select,
+  .grant-form .ant-btn {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .grant-form .ant-select {
+    min-width: 0 !important;
+  }
+
+  .device-actions.ant-space {
+    display: flex;
+    width: 100%;
+  }
+
+  .toolbar.ant-space {
+    display: flex;
+    width: 100%;
+  }
+
+  .toolbar .ant-space-item,
+  .toolbar .ant-select,
+  .toolbar .ant-upload,
+  .toolbar .ant-btn {
+    width: 100%;
+  }
+
+  .toolbar .ant-select {
+    min-width: 0 !important;
+  }
+
+  .history-list .ant-list-item,
+  .file-list .ant-list-item {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .history-list .ant-list-item-meta,
+  .file-list .ant-list-item-meta {
+    flex: 1 1 180px;
+    min-width: 0;
+  }
+
+  .history-list .ant-list-item-action {
+    margin-inline-start: 40px;
+  }
+
+  .file-list .ant-list-item-action,
+  .file-list .ant-space {
+    max-width: 100%;
+  }
 }

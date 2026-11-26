@@ -36,7 +36,7 @@ export function DocumentsPage() {
 
   return (
     <div>
-      <Space align="center" style={{ width: "100%", justifyContent: "space-between" }}>
+      <Space className="page-heading" align="center" wrap>
         <Typography.Title level={3} style={{ margin: 0 }}>
           Documents for {access.display_name}
         </Typography.Title>

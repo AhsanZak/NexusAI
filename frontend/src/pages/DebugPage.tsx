@@ -5,8 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 
 import { loadGatewayStatus, loadTraces, sendDebugPrompt, type GatewayStatus, type LlmTrace } from "../api/debug";
 import { ModelRouteBar } from "../components/ModelRouteBar";
+import { useNarrow } from "../ui/useNarrow";
 
 export function DebugPage() {
+  const narrow = useNarrow();
   const [status, setStatus] = useState<GatewayStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [traces, setTraces] = useState<LlmTrace[]>([]);
@@ -166,7 +168,7 @@ export function DebugPage() {
 
       <Drawer
         title="Trace detail"
-        width={640}
+        width={narrow ? "100%" : 640}
         open={selected !== null}
         onClose={() => setSelected(null)}
       >

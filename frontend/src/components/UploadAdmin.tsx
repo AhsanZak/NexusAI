@@ -14,6 +14,7 @@ import {
 } from "../api/library";
 import { loadUsers } from "../api/users";
 import type { SessionUser } from "../auth/session";
+import { DeviceActions } from "./DeviceActions";
 
 const RELATIONS = [
   { value: "viewer", label: "Viewer" },
@@ -102,6 +103,7 @@ export function UploadAdmin() {
   }
 
   const selectedSpace = spaces.find((item) => item.id === space);
+  const selected = documents.find((item) => item.id === selectedId);
 
   return (
     <div>
@@ -111,7 +113,7 @@ export function UploadAdmin() {
         analyst, and auditor can open that file. A member with none of those relations cannot see it.
       </Typography.Paragraph>
       {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
-      <Space wrap style={{ marginBottom: 16 }}>
+      <Space className="toolbar" wrap style={{ marginBottom: 16 }}>
         <Select
           value={space}
           style={{ minWidth: 180 }}
@@ -131,11 +133,19 @@ export function UploadAdmin() {
             Add document
           </Button>
         </Upload>
+        <DeviceActions
+          busy={uploading}
+          onFile={(file) => void onUpload(file)}
+          shareTitle={selected?.filename}
+          shareTextValue={selected ? `${selected.filename}\n${selected.excerpt}` : undefined}
+          onMessage={setError}
+        />
       </Space>
       <Table
         rowKey="id"
         dataSource={documents}
         pagination={false}
+        scroll={{ x: "max-content" }}
         onRow={(record) => ({ onClick: () => setSelectedId(record.id) })}
         columns={[
           { title: "File", dataIndex: "filename" },
@@ -146,7 +156,7 @@ export function UploadAdmin() {
       />
       {selectedId ? (
         <div style={{ marginTop: 16 }}>
-          <Space wrap>
+          <Space className="toolbar" wrap>
             <Select
               value={memberId || undefined}
               placeholder="Member"
@@ -166,6 +176,7 @@ export function UploadAdmin() {
             rowKey={(row) => `${row.user_id}-${row.relation}`}
             dataSource={access}
             pagination={false}
+            scroll={{ x: "max-content" }}
             columns={[
               { title: "Name", dataIndex: "display_name" },
               { title: "Email", dataIndex: "email" },

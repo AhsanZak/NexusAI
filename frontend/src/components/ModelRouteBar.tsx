@@ -21,11 +21,11 @@ export function ModelRouteBar() {
 
   return (
     <div>
-      <Space align="center" wrap>
+      <Space className="model-route" align="center" wrap>
         <Select
           value={models.some((item) => item.id === modelId) ? modelId : undefined}
           placeholder="Choose a model"
-          style={{ minWidth: 180 }}
+          popupMatchSelectWidth={false}
           onChange={(value: string) => {
             void choose(value).catch((reason: unknown) => {
               setError(reason instanceof Error ? reason.message : "The model could not be changed");
